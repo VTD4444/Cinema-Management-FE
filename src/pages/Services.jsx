@@ -1,0 +1,290 @@
+import React, { useState } from 'react';
+import {
+    Search,
+    Plus,
+    Filter,
+    Download,
+    Package,
+    CheckCircle2,
+    AlertCircle,
+    Pencil,
+    Trash2,
+} from 'lucide-react';
+import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge } from '../components/ui';
+import ServiceModals from '../components/features/services/ServiceModals';
+
+const mockServices = [
+    {
+        id: 'SP-001',
+        name: 'Combo Bắp Nước Solo',
+        image: 'https://images.unsplash.com/photo-1585647347384-2593bc35786b?auto=format&fit=crop&q=80&w=150&h=150',
+        type: 'Combo',
+        price: 85000,
+        stock: 150,
+        maxStock: 200,
+        status: 'Đang bán',
+        description: '- 01 Bắp rang bơ size L (Vị ngọt/phô mai)\n- 01 Nước ngọt size L (Pepsi/7Up/Mirinda)\n- Thưởng thức trọn vẹn suất ăn cá nhân',
+    },
+    {
+        id: 'SP-042',
+        name: 'Bắp Rang Bơ Phô Mai (L)',
+        image: 'https://images.unsplash.com/photo-1570114681650-70f032646d29?auto=format&fit=crop&q=80&w=150&h=150',
+        type: 'Đồ ăn',
+        price: 65000,
+        stock: 42,
+        maxStock: 100,
+        status: 'Đang bán',
+        description: 'Bắp rang bơ vị phô mai size L. Giòn tan, thơm lựng.',
+    },
+    {
+        id: 'SP-108',
+        name: 'Pepsi (L)',
+        image: 'https://images.unsplash.com/photo-1629203851122-3726ce0008fa?auto=format&fit=crop&q=80&w=150&h=150',
+        type: 'Thức uống',
+        price: 35000,
+        stock: 2,
+        maxStock: 50,
+        status: 'Ngừng kinh doanh',
+        description: 'Nước ngọt có gas nhãn hiệu Pepsi size L.',
+    },
+    {
+        id: 'SP-112',
+        name: 'Nước Khoáng Dasani 500ml',
+        image: 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&q=80&w=150&h=150',
+        type: 'Thức uống',
+        price: 20000,
+        stock: 210,
+        maxStock: 300,
+        status: 'Đang bán',
+        description: 'Nước tinh khiết đóng chai 500ml.',
+    },
+];
+
+const stats = [
+    {
+        title: 'Tổng sản phẩm',
+        value: '124',
+        icon: Package,
+    },
+    {
+        title: 'Sản phẩm đang bán',
+        value: '118',
+        icon: CheckCircle2,
+    },
+    {
+        title: 'Hết hàng',
+        value: '06',
+        icon: AlertCircle,
+    },
+];
+
+
+const Services = () => {
+    const [activeTab, setActiveTab] = useState('Tất cả');
+    const [modalState, setModalState] = useState({
+        type: null, // 'add', 'edit', 'delete', 'view'
+        data: null,
+    });
+
+
+    const closeModal = () => setModalState({ type: null, data: null });
+
+    return (
+        <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Quản lý Dịch vụ
+                    </h2>
+                    <p className="text-zinc-400 text-sm mt-1">Quản lý kho đồ ăn, thức uống và các gói combo ưu đãi</p>
+                </div>
+                <Button onClick={() => setModalState({ type: 'add', data: null })} className="gap-2 rounded-full px-5 hover:scale-105 transition-transform duration-200 hover:shadow-[0_0_15px_rgba(229,9,20,0.3)]">
+                    <Plus className="h-4 w-4" />
+                    Thêm dịch vụ mới
+                </Button>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-3">
+                {stats.map((stat) => (
+                    <div
+                        key={stat.title}
+                        className="rounded-xl border border-border bg-surface/50 p-6 flex flex-col justify-between transition-all duration-300 hover:bg-surface/80 hover:border-zinc-700 hover:shadow-lg group relative overflow-hidden"
+                    >
+                        <div className="flex items-center justify-between z-10">
+                            <span className="text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">{stat.title}</span>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-800/80 ring-1 ring-white/5 group-hover:ring-white/10 transition-all shadow-inner">
+                                <stat.icon className={`h-5 w-5 ${stat.title === 'Tổng sản phẩm' ? 'text-primary' : stat.title === 'Sản phẩm đang bán' ? 'text-emerald-500' : 'text-red-500'}`} />
+                            </div>
+                        </div>
+                        <div className="mt-4 z-10">
+                            <span className="text-3xl font-bold tracking-tight text-white group-hover:text-primary transition-colors">{stat.value}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Controls & Table Background Container */}
+            <div className="rounded-xl border border-border bg-surface/30 p-1 flex flex-col gap-1 overflow-hidden shadow-sm">
+                <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between border-b border-border/50 bg-surface/50 rounded-t-lg">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                        <div className="flex bg-zinc-900/80 p-1 rounded-full border border-zinc-800/60 shadow-inner">
+                            {['Tất cả', 'Đồ ăn', 'Thức uống', 'Combo'].map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ${activeTab === tab
+                                        ? 'bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]'
+                                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Button variant="secondary" className="gap-2 rounded-full border-zinc-700/50 hover:bg-zinc-800 hover:border-zinc-600 transition-all bg-zinc-900/50">
+                            <Filter className="h-4 w-4 text-zinc-400" />
+                            <span>Bộ lọc</span>
+                        </Button>
+                        <Button variant="secondary" className="gap-2 rounded-full border-zinc-700/50 hover:bg-zinc-800 hover:border-zinc-600 transition-all bg-zinc-900/50">
+                            <Download className="h-4 w-4 text-zinc-400" />
+                            <span>Xuất Excel</span>
+                        </Button>
+                    </div>
+                </div>
+
+                <div className="p-0 bg-transparent border-t border-border/50">
+                    <Table className="border-0 rounded-none bg-transparent">
+                        <TableHeader className="bg-transparent border-b border-border/40">
+                            <TableRow className="hover:bg-transparent border-0">
+                                <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-6">Thông tin sản phẩm</TableHead>
+                                <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Loại</TableHead>
+                                <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Giá bán</TableHead>
+                                <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider min-w-[150px]">Tồn kho</TableHead>
+                                <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Trạng thái</TableHead>
+                                <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pr-6 text-right">Hành động</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {mockServices.map((item) => (
+                                <TableRow key={item.id} className="border-b border-border/20 hover:bg-white/5 transition-colors group">
+                                    {/* Info */}
+                                    <TableCell className="pl-6 py-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 overflow-hidden rounded-lg bg-zinc-800 border border-zinc-700/50 shadow-sm shrink-0">
+                                                {item.image ? (
+                                                    <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                                                ) : (
+                                                    <Package className="h-6 w-6 m-auto mt-3 text-zinc-500" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-sm text-gray-200 cursor-pointer hover:text-primary transition-colors inline-block"
+                                                    onClick={() => setModalState({ type: 'view', data: item })}
+                                                >
+                                                    {item.name}
+                                                </p>
+                                                <p className="text-[11px] text-zinc-500 font-medium mt-0.5 tracking-wide">Mã: {item.id}</p>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+
+                                    {/* Type */}
+                                    <TableCell className="py-4">
+                                        <Badge
+                                            variant={item.type === 'Combo' ? 'warning' : item.type === 'Đồ ăn' ? 'primary' : 'success'}
+                                            className="bg-opacity-10 border border-current/20 font-semibold"
+                                        >
+                                            {item.type}
+                                        </Badge>
+                                    </TableCell>
+
+                                    {/* Price */}
+                                    <TableCell className="py-4">
+                                        <span className="font-bold text-zinc-100">{item.price.toLocaleString('vi-VN')} VNĐ</span>
+                                    </TableCell>
+
+                                    {/* Stock */}
+                                    <TableCell className="py-4">
+                                        {(() => {
+                                            const percentage = Math.min(100, Math.round((item.stock / item.maxStock) * 100));
+                                            let colorClass = 'bg-emerald-500';
+                                            if (item.stock === 0) colorClass = 'bg-zinc-600';
+                                            else if (percentage < 20) colorClass = 'bg-red-500';
+                                            else if (percentage < 50) colorClass = 'bg-amber-500';
+
+                                            return (
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex-1 h-1.5 rounded-full bg-zinc-800/80 overflow-hidden shadow-inner w-full max-w-[80px]">
+                                                        <div className={`h-full rounded-full ${colorClass} transition-all duration-500 ease-out`} style={{ width: `${percentage}%` }} />
+                                                    </div>
+                                                    <span className="w-8 text-right font-medium text-xs text-zinc-300">{item.stock}</span>
+                                                </div>
+                                            );
+                                        })()}
+                                    </TableCell>
+
+                                    {/* Status */}
+                                    <TableCell className="py-4">
+                                        {(() => {
+                                            const isSelling = item.status === 'Đang bán';
+                                            return (
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`h-1.5 w-1.5 rounded-full ${isSelling ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
+                                                    <span className={`text-xs font-medium ${isSelling ? 'text-emerald-500' : 'text-red-500'}`}>{item.status}</span>
+                                                </div>
+                                            );
+                                        })()}
+                                    </TableCell>
+
+                                    {/* Actions */}
+                                    <TableCell className="pr-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+                                            <button onClick={() => setModalState({ type: 'edit', data: item })} className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
+                                                <Pencil className="h-4 w-4" />
+                                            </button>
+                                            <button onClick={() => setModalState({ type: 'delete', data: item })} className="p-2 rounded-full text-zinc-400 hover:text-red-500 hover:bg-zinc-800 transition-all">
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {/* Simple Pagination */}
+                <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-surface/50 rounded-b-lg">
+                    <span className="text-sm text-zinc-500">
+                        Hiển thị <span className="font-semibold text-zinc-300">1</span> - <span className="font-semibold text-zinc-300">4</span> của <span className="font-semibold text-zinc-300">124</span> sản phẩm
+                    </span>
+                    <div className="flex items-center gap-1">
+                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors">
+                            &lt;
+                        </button>
+                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-md shadow-primary/20">
+                            1
+                        </button>
+                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
+                            2
+                        </button>
+                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
+                            3
+                        </button>
+                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors">
+                            &gt;
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <ServiceModals state={modalState} onClose={closeModal} />
+        </div >
+    );
+};
+
+export default Services;
