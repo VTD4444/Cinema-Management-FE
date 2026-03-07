@@ -8,7 +8,7 @@ import useAuthStore from '../../store/useAuthStore';
 export const Sidebar = () => {
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
-  const [expandedMenus, setExpandedMenus] = useState(['/movies']); // Default expand Phim menu based on design
+  const [expandedMenus, setExpandedMenus] = useState(['/movies', '/cinemas']);
 
   const toggleSubmenu = (path) => {
     setExpandedMenus((prev) =>
@@ -117,7 +117,7 @@ export const Sidebar = () => {
                       key={child.name}
                       to={child.href}
                       // Use end modifier so nested routes like /movies/new don't highlight the parent 'Danh sách Phim'
-                      end={child.href === '/movies'}
+                      end={child.href === '/movies' || child.href === '/cinemas'}
                       className={({ isActive: isChildActive }) =>
                         cn(
                           'block px-3 py-2 rounded-lg text-sm transition-colors',

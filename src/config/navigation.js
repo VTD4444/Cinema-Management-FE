@@ -29,6 +29,12 @@ export const NAVIGATION_ITEMS = [
     name: 'Rạp',
     href: '/cinemas',
     icon: MonitorPlay,
+    children: [
+      { name: 'Tỉnh/Thành phố', href: '/cinemas/cities' },
+      { name: 'Danh sách Rạp', href: '/cinemas' },
+      { name: 'Phòng chiếu & Ghế', href: '/cinemas/rooms' },
+      { name: 'Ghế', href: '/cinemas/seats' },
+    ],
   },
   {
     name: 'Lịch chiếu',
