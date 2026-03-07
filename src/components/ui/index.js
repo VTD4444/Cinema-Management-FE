@@ -5,3 +5,6 @@ export * from './Table';
 export * from './Select';
 export * from './Badge';
 export * from './Textarea';
+export { default as ServiceModals } from './ServiceModals';
+export { default as VoucherModals } from './VoucherModals';
+export { default as UserModals } from './UserModals';

@@ -10,8 +10,7 @@ import {
     Pencil,
     Trash2,
 } from 'lucide-react';
-import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge } from '../components/ui';
-import ServiceModals from '../components/features/services/ServiceModals';
+import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ServiceModals } from '../components/ui';
 
 const mockServices = [
     {
