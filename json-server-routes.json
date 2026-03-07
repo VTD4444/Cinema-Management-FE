@@ -1,0 +1,7 @@
+{
+  "/api/v1/movies": "/movies",
+  "/api/v1/movies/:id": "/movies/:id",
+  "/api/v1/genres": "/genres",
+  "/api/v1/genres/:id": "/genres/:id",
+  "/api/v1/movieGenres": "/movieGenres"
+}
