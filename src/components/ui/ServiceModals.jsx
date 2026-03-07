@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Input, Button, Select, Textarea } from '../../ui';
+import { Modal, Input, Button, Select, Textarea } from './index';
 import { ImagePlus, AlertTriangle, Package, Pencil, X } from 'lucide-react';
 
 const ServiceModals = ({ state, onClose }) => {
