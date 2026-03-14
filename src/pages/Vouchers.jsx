@@ -199,14 +199,15 @@ const Vouchers = () => {
                                             <span className="text-[10px] text-zinc-500 block">lượt dùng</span>
                                         </TableCell>
                                         <TableCell className="py-4 text-center">
-                                            {item.is_active ? (
-                                                <span className="text-[11px] text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                                                    Đang áp dụng
-                                                </span>
-                                            ) : (
+                                            {item.is_deleted ? (
                                                 <span className="text-[11px] text-zinc-400 bg-zinc-800 px-2.5 py-1 rounded-full border border-zinc-700">
                                                     Tạm dừng
                                                 </span>
+                                            ) : (
+                                                <span className="text-[11px] text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                                                    Đang áp dụng
+                                                </span>
+
                                             )}
                                         </TableCell>
                                         <TableCell className="pr-6 py-4 text-right">
@@ -254,8 +255,8 @@ const Vouchers = () => {
                                     key={i + 1}
                                     onClick={() => setPageNo(i + 1)}
                                     className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${pageNo === i + 1
-                                            ? 'bg-primary text-white shadow-md shadow-primary/20'
-                                            : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white'
+                                        ? 'bg-primary text-white shadow-md shadow-primary/20'
+                                        : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white'
                                         }`}
                                 >
                                     {i + 1}

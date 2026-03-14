@@ -230,8 +230,8 @@ const Foods = () => {
                                             const isSelling = item.is_deleted;
                                             return (
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`h-1.5 w-1.5 rounded-full ${isSelling ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
-                                                    <span className={`text-xs font-medium ${isSelling ? 'text-emerald-500' : 'text-red-500'}`}>{isSelling ? 'Đang bán' : 'Ngừng kinh doanh'}</span>
+                                                    <div className={`h-1.5 w-1.5 rounded-full ${isSelling === false ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
+                                                    <span className={`text-xs font-medium ${isSelling === false ? 'text-emerald-500' : 'text-red-500'}`}>{isSelling === false ? 'Đang bán' : 'Ngừng kinh doanh'}</span>
                                                 </div>
                                             );
                                         })()}

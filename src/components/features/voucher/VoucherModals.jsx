@@ -26,8 +26,8 @@ const VoucherModals = ({ state, onClose, onSave }) => {
                     code: data.code || '',
                     value: data.value ? data.value.toString() : '',
                     type: data.type || 'PERCENT',
-                    start_date: data.start_date || '',
-                    end_date: data.end_date || '',
+                    start_date: data.start_date ? data.start_date.split('T')[0] : '',
+                    end_date: data.end_date ? data.end_date.split('T')[0] : '',
                     usage_limit: data.usage_limit ? data.usage_limit.toString() : '',
                     is_active: data.is_active !== undefined ? data.is_active : true
                 });
@@ -140,8 +140,8 @@ const VoucherModals = ({ state, onClose, onSave }) => {
 
                         <Select
                             label="Trạng thái"
-                            value={formData.is_active ? 'true' : 'false'}
-                            onChange={(e) => handleInputChange('is_active', e.target.value === 'true')}
+                            value={formData.is_deleted ? 'true' : 'false'}
+                            onChange={(e) => handleInputChange('is_deleted', e.target.value === 'true')}
                             className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
                         >
                             <option value="true">Đang kích hoạt</option>
@@ -155,7 +155,7 @@ const VoucherModals = ({ state, onClose, onSave }) => {
                             className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
                         >
                             <option value="PERCENT">Theo phần trăm (%)</option>
-                            <option value="FIXED_AMOUNT">Theo số tiền (VNĐ)</option>
+                            <option value="CASH">Theo số tiền (VNĐ)</option>
                         </Select>
 
                         <div className="relative">
@@ -217,7 +217,7 @@ const VoucherModals = ({ state, onClose, onSave }) => {
             </Modal>
         );
     }
-    
+
     return null;
 };
 
