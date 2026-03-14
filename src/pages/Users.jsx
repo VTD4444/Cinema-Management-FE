@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Plus, Filter, Edit, Trash2, Shield, User } from 'lucide-react';
-import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, UserModals } from '../components/ui';
+import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import UserModals from '../components/features/user/UserModals';
 
 const mockUsers = [
     {

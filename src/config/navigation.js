@@ -8,6 +8,7 @@ import {
   ScanLine,
   Receipt,
   Users,
+  MessageSquare,
 } from 'lucide-react';
 
 export const NAVIGATION_ITEMS = [
@@ -42,8 +43,8 @@ export const NAVIGATION_ITEMS = [
     icon: CalendarDays,
   },
   {
-    name: 'Dịch vụ',
-    href: '/services',
+    name: 'Đồ ăn / Thức uống',
+    href: '/foods',
     icon: Utensils,
   },
   {
@@ -65,5 +66,10 @@ export const NAVIGATION_ITEMS = [
     name: 'Người dùng',
     href: '/users',
     icon: Users,
+  },
+  {
+    name: 'Phản hồi',
+    href: '/feedbacks',
+    icon: MessageSquare,
   },
 ];

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Input, Button, Select } from './index';
+import { Modal, Input, Button, Select } from '../../ui';
 import { UserPlus } from 'lucide-react';
 
 const UserModals = ({ state, onClose }) => {

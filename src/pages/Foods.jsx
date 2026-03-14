@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Search,
     Plus,
@@ -10,102 +10,90 @@ import {
     Pencil,
     Trash2,
 } from 'lucide-react';
-import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ServiceModals } from '../components/ui';
+import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge } from '../components/ui';
+import FoodModals from '../components/features/food/FoodModals';
+import { getFoodsAdmin } from '../api/foodApi';
 
-const mockServices = [
-    {
-        id: 'SP-001',
-        name: 'Combo Bắp Nước Solo',
-        image: 'https://images.unsplash.com/photo-1585647347384-2593bc35786b?auto=format&fit=crop&q=80&w=150&h=150',
-        type: 'Combo',
-        price: 85000,
-        stock: 150,
-        maxStock: 200,
-        status: 'Đang bán',
-        description: '- 01 Bắp rang bơ size L (Vị ngọt/phô mai)\n- 01 Nước ngọt size L (Pepsi/7Up/Mirinda)\n- Thưởng thức trọn vẹn suất ăn cá nhân',
-    },
-    {
-        id: 'SP-042',
-        name: 'Bắp Rang Bơ Phô Mai (L)',
-        image: 'https://images.unsplash.com/photo-1570114681650-70f032646d29?auto=format&fit=crop&q=80&w=150&h=150',
-        type: 'Đồ ăn',
-        price: 65000,
-        stock: 42,
-        maxStock: 100,
-        status: 'Đang bán',
-        description: 'Bắp rang bơ vị phô mai size L. Giòn tan, thơm lựng.',
-    },
-    {
-        id: 'SP-108',
-        name: 'Pepsi (L)',
-        image: 'https://images.unsplash.com/photo-1629203851122-3726ce0008fa?auto=format&fit=crop&q=80&w=150&h=150',
-        type: 'Thức uống',
-        price: 35000,
-        stock: 2,
-        maxStock: 50,
-        status: 'Ngừng kinh doanh',
-        description: 'Nước ngọt có gas nhãn hiệu Pepsi size L.',
-    },
-    {
-        id: 'SP-112',
-        name: 'Nước Khoáng Dasani 500ml',
-        image: 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&q=80&w=150&h=150',
-        type: 'Thức uống',
-        price: 20000,
-        stock: 210,
-        maxStock: 300,
-        status: 'Đang bán',
-        description: 'Nước tinh khiết đóng chai 500ml.',
-    },
-];
-
-const stats = [
-    {
-        title: 'Tổng sản phẩm',
-        value: '124',
-        icon: Package,
-    },
-    {
-        title: 'Sản phẩm đang bán',
-        value: '118',
-        icon: CheckCircle2,
-    },
-    {
-        title: 'Hết hàng',
-        value: '06',
-        icon: AlertCircle,
-    },
-];
-
-
-const Services = () => {
+const Foods = () => {
     const [activeTab, setActiveTab] = useState('Tất cả');
+    const [foods, setFoods] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [pageNo, setPageNo] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+
     const [modalState, setModalState] = useState({
         type: null, // 'add', 'edit', 'delete', 'view'
         data: null,
     });
 
+    const fetchFoods = async (page = 1) => {
+        setLoading(true);
+        try {
+            const response = await getFoodsAdmin({ pageNo: page, pageSize: 10 });
 
-    const closeModal = () => setModalState({ type: null, data: null });
+            // Axios interceptor already unwraps response.data, so response here IS the payload body
+            if (response?.success) {
+                const data = response.data;
+                setFoods(data?.items || []);
+                setPageNo(data?.pageNo || 1);
+                setTotalPages(data?.totalPages || 1);
+                setTotalItems(data?.totalItems || 0);
+            }
+        } catch (error) {
+            console.error('Error fetching foods:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchFoods(pageNo);
+    }, [pageNo]);
+
+    const closeModal = (shouldRefresh = false) => {
+        setModalState({ type: null, data: null });
+        if (shouldRefresh) {
+            fetchFoods(pageNo);
+        }
+    };
+
+    const displayStats = [
+        {
+            title: 'Tổng sản phẩm',
+            value: totalItems.toString(),
+            icon: Package,
+        },
+        {
+            title: 'Sản phẩm đang bán',
+            value: (foods || []).filter(f => f.is_available).length.toString(), // Approximated from current page or backend could provide
+            icon: CheckCircle2,
+        },
+        {
+            title: 'Ngừng kinh doanh',
+            value: (foods || []).filter(f => !f.is_available).length.toString(), // Approximated from current page
+            icon: AlertCircle,
+        },
+    ];
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                        Quản lý Dịch vụ
+                        Quản lý Đồ ăn / Thức uống
                     </h2>
                     <p className="text-zinc-400 text-sm mt-1">Quản lý kho đồ ăn, thức uống và các gói combo ưu đãi</p>
                 </div>
                 <Button onClick={() => setModalState({ type: 'add', data: null })} className="gap-2 rounded-full px-5 hover:scale-105 transition-transform duration-200 hover:shadow-[0_0_15px_rgba(229,9,20,0.3)]">
                     <Plus className="h-4 w-4" />
-                    Thêm dịch vụ mới
+                    Thêm đồ ăn mới
                 </Button>
             </div>
 
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-3">
-                {stats.map((stat) => (
+                {displayStats.map((stat) => (
                     <div
                         key={stat.title}
                         className="rounded-xl border border-border bg-surface/50 p-6 flex flex-col justify-between transition-all duration-300 hover:bg-surface/80 hover:border-zinc-700 hover:shadow-lg group relative overflow-hidden"
@@ -168,14 +156,22 @@ const Services = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {mockServices.map((item) => (
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-8 text-zinc-500">Đang tải dữ liệu...</TableCell>
+                                </TableRow>
+                            ) : !foods || foods.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-8 text-zinc-500">Không tìm thấy đồ ăn nào</TableCell>
+                                </TableRow>
+                            ) : foods.map((item) => (
                                 <TableRow key={item.id} className="border-b border-border/20 hover:bg-white/5 transition-colors group">
                                     {/* Info */}
                                     <TableCell className="pl-6 py-4">
                                         <div className="flex items-center gap-4">
                                             <div className="h-12 w-12 overflow-hidden rounded-lg bg-zinc-800 border border-zinc-700/50 shadow-sm shrink-0">
-                                                {item.image ? (
-                                                    <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                                                {item.image_url ? (
+                                                    <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
                                                 ) : (
                                                     <Package className="h-6 w-6 m-auto mt-3 text-zinc-500" />
                                                 )}
@@ -191,27 +187,29 @@ const Services = () => {
                                         </div>
                                     </TableCell>
 
-                                    {/* Type */}
+                                    {/* Type (Hardcoded to Đồ ăn for now or derived if you had a category field) */}
                                     <TableCell className="py-4">
                                         <Badge
-                                            variant={item.type === 'Combo' ? 'warning' : item.type === 'Đồ ăn' ? 'primary' : 'success'}
+                                            variant="primary"
                                             className="bg-opacity-10 border border-current/20 font-semibold"
                                         >
-                                            {item.type}
+                                            Đồ ăn
                                         </Badge>
                                     </TableCell>
 
                                     {/* Price */}
                                     <TableCell className="py-4">
-                                        <span className="font-bold text-zinc-100">{item.price.toLocaleString('vi-VN')} VNĐ</span>
+                                        <span className="font-bold text-zinc-100">{item.price?.toLocaleString('vi-VN')} VNĐ</span>
                                     </TableCell>
 
                                     {/* Stock */}
                                     <TableCell className="py-4">
                                         {(() => {
-                                            const percentage = Math.min(100, Math.round((item.stock / item.maxStock) * 100));
+                                            const stock = item.stock_quantity || 0;
+                                            const maxStock = 200; // arbitrary max for progress bar
+                                            const percentage = Math.min(100, Math.round((stock / maxStock) * 100));
                                             let colorClass = 'bg-emerald-500';
-                                            if (item.stock === 0) colorClass = 'bg-zinc-600';
+                                            if (stock === 0) colorClass = 'bg-zinc-600';
                                             else if (percentage < 20) colorClass = 'bg-red-500';
                                             else if (percentage < 50) colorClass = 'bg-amber-500';
 
@@ -220,7 +218,7 @@ const Services = () => {
                                                     <div className="flex-1 h-1.5 rounded-full bg-zinc-800/80 overflow-hidden shadow-inner w-full max-w-[80px]">
                                                         <div className={`h-full rounded-full ${colorClass} transition-all duration-500 ease-out`} style={{ width: `${percentage}%` }} />
                                                     </div>
-                                                    <span className="w-8 text-right font-medium text-xs text-zinc-300">{item.stock}</span>
+                                                    <span className="w-8 text-right font-medium text-xs text-zinc-300">{stock}</span>
                                                 </div>
                                             );
                                         })()}
@@ -229,11 +227,11 @@ const Services = () => {
                                     {/* Status */}
                                     <TableCell className="py-4">
                                         {(() => {
-                                            const isSelling = item.status === 'Đang bán';
+                                            const isSelling = item.is_deleted;
                                             return (
                                                 <div className="flex items-center gap-2">
                                                     <div className={`h-1.5 w-1.5 rounded-full ${isSelling ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
-                                                    <span className={`text-xs font-medium ${isSelling ? 'text-emerald-500' : 'text-red-500'}`}>{item.status}</span>
+                                                    <span className={`text-xs font-medium ${isSelling ? 'text-emerald-500' : 'text-red-500'}`}>{isSelling ? 'Đang bán' : 'Ngừng kinh doanh'}</span>
                                                 </div>
                                             );
                                         })()}
@@ -256,34 +254,42 @@ const Services = () => {
                     </Table>
                 </div>
 
-                {/* Simple Pagination */}
+                {/* Pagination */}
                 <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-surface/50 rounded-b-lg">
                     <span className="text-sm text-zinc-500">
-                        Hiển thị <span className="font-semibold text-zinc-300">1</span> - <span className="font-semibold text-zinc-300">4</span> của <span className="font-semibold text-zinc-300">124</span> sản phẩm
+                        Hiển thị trang <span className="font-semibold text-zinc-300">{pageNo}</span> / <span className="font-semibold text-zinc-300">{totalPages}</span> của <span className="font-semibold text-zinc-300">{totalItems}</span> sản phẩm
                     </span>
                     <div className="flex items-center gap-1">
-                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors">
+                        <button
+                            disabled={pageNo <= 1}
+                            onClick={() => setPageNo(p => p - 1)}
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                        >
                             &lt;
                         </button>
-                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-md shadow-primary/20">
-                            1
-                        </button>
-                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
-                            2
-                        </button>
-                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
-                            3
-                        </button>
-                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors">
+                        {[...Array(totalPages)].map((_, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setPageNo(i + 1)}
+                                className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${pageNo === i + 1 ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800'}`}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+                        <button
+                            disabled={pageNo >= totalPages}
+                            onClick={() => setPageNo(p => p + 1)}
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                        >
                             &gt;
                         </button>
                     </div>
                 </div>
             </div>
 
-            <ServiceModals state={modalState} onClose={closeModal} />
+            <FoodModals state={modalState} onClose={closeModal} />
         </div >
     );
 };
 
-export default Services;
+export default Foods;
