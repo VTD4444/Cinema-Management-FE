@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Input, Button, Select, Textarea } from '../../ui';
 import { ImagePlus, Package, Pencil } from 'lucide-react';
 import { createFood, updateFood, deleteFood } from '../../../api/foodApi';
+import { uploadImage } from '../../../api/uploadApi';
 
 const FoodModals = ({ state, onClose }) => {
     if (!state.type) return null;
@@ -20,6 +21,7 @@ const FoodModals = ({ state, onClose }) => {
         stock_quantity: '',
         is_available: true
     });
+    const [selectedImageFile, setSelectedImageFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -28,7 +30,7 @@ const FoodModals = ({ state, onClose }) => {
             if (data) {
                 setFormData({
                     name: data.name || '',
-                    image_url: data.image || 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=300&q=80',
+                    image_url: data.image_url || 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=300&q=80',
                     description: data.description || '',
                     price: data.price ? data.price.toString() : '',
                     stock_quantity: data.stock_quantity ? data.stock_quantity.toString() : '',
@@ -44,6 +46,7 @@ const FoodModals = ({ state, onClose }) => {
                     is_available: true
                 });
             }
+            setSelectedImageFile(null);
             setError(null);
         }
     }, [data, isAddOrEdit, state.type]);
@@ -57,10 +60,35 @@ const FoodModals = ({ state, onClose }) => {
         setLoading(true);
         setError(null);
 
+        let finalImageUrl = formData.image_url;
+
+        // 1. Upload image if a new file was selected
+        if (selectedImageFile) {
+            try {
+                const uploadData = new FormData();
+                uploadData.append('file', selectedImageFile);
+
+                const response = await uploadImage(uploadData);
+                if (response?.success) {
+                    // response.data is an array based on user's API specs
+                    const uploadedImage = Array.isArray(response.data) ? response.data[0] : response.data;
+                    finalImageUrl = uploadedImage?.url || uploadedImage || finalImageUrl;
+                } else {
+                    throw new Error(response?.message || 'Upload ảnh thất bại');
+                }
+            } catch (err) {
+                console.error('Lỗi upload ảnh:', err);
+                setError(err.message || 'Lỗi khi upload ảnh. Vui lòng thử lại.');
+                setLoading(false);
+                return;
+            }
+        }
+
+        // 2. Submit the food payload
         const payload = {
             ...(state.type === 'edit' && { id: data.id }),
             name: formData.name,
-            image_url: formData.image_url,
+            image_url: finalImageUrl,
             description: formData.description,
             price: Number(formData.price),
             stock_quantity: Number(formData.stock_quantity),
@@ -88,6 +116,25 @@ const FoodModals = ({ state, onClose }) => {
             setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Check file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                setError('Kích thước ảnh vượt quá 5MB. Vui lòng chọn ảnh nhỏ hơn.');
+                return;
+            }
+
+            // Generate a local preview URL
+            const previewUrl = URL.createObjectURL(file);
+
+            // Store the file to be uploaded on submit, and update the preview UI
+            setSelectedImageFile(file);
+            setFormData(prev => ({ ...prev, image_url: previewUrl }));
+            setError(null);
         }
     };
 
@@ -179,7 +226,17 @@ const FoodModals = ({ state, onClose }) => {
                         {/* Left: Image Upload */}
                         <div className="col-span-1 space-y-3">
                             <label className="text-sm font-medium text-gray-300">Hình ảnh</label>
-                            <div className="aspect-square w-full rounded-2xl border-2 border-dashed border-zinc-700/60 bg-zinc-900/50 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-zinc-800/50 hover:border-zinc-500/50 transition-all group overflow-hidden relative">
+                            <div
+                                className="aspect-square w-full rounded-2xl border-2 border-dashed border-zinc-700/60 bg-zinc-900/50 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-zinc-800/50 hover:border-zinc-500/50 transition-all group overflow-hidden relative"
+                                onClick={() => document.getElementById('food-image-upload').click()}
+                            >
+                                <input
+                                    id="food-image-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleImageUpload}
+                                />
                                 {formData.image_url ? (
                                     <img
                                         src={formData.image_url}
@@ -216,26 +273,15 @@ const FoodModals = ({ state, onClose }) => {
                                 className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 rounded-xl transition-colors h-11"
                             />
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input
-                                    label="Số lượng tồn kho"
-                                    type="number"
-                                    min="0"
-                                    required
-                                    value={formData.stock_quantity}
-                                    onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
-                                    className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
-                                />
-                                <Select
-                                    label="Trạng thái"
-                                    value={formData.is_available ? 'Đang bán' : 'Ngừng kinh doanh'}
-                                    onChange={(e) => handleInputChange('is_available', e.target.value === 'Đang bán')}
-                                    className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
-                                >
-                                    <option value="Đang bán">Đang bán</option>
-                                    <option value="Ngừng kinh doanh">Ngừng kinh doanh</option>
-                                </Select>
-                            </div>
+                            <Input
+                                label="Số lượng tồn kho"
+                                type="number"
+                                min="0"
+                                required
+                                value={formData.stock_quantity}
+                                onChange={(e) => handleInputChange('stock_quantity', e.target.value)}
+                                className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
+                            />
 
                             <div className="relative">
                                 <Input

@@ -1,41 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Filter, Edit, Trash2, Shield, User } from 'lucide-react';
 import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import UserModals from '../components/features/user/UserModals';
-
-const mockUsers = [
-    {
-        id: 'USR-001',
-        username: 'nguyenvana',
-        fullName: 'Nguyễn Văn A',
-        email: 'nguyenvana@example.com',
-        status: 'Hoạt động',
-    },
-    {
-        id: 'USR-002',
-        username: 'tranthib',
-        fullName: 'Trần Thị B',
-        email: 'tranthib@example.com',
-        status: 'Hoạt động',
-    },
-    {
-        id: 'USR-003',
-        username: 'leminhc',
-        fullName: 'Lê Minh C',
-        email: 'leminhc@example.com',
-        status: 'Đã khóa',
-    },
-    {
-        id: 'USR-004',
-        username: 'hoangvand',
-        fullName: 'Hoàng Văn D',
-        email: 'hoangvand@example.com',
-        status: 'Hoạt động',
-    },
-];
+import { getAllUsers } from '../api/userApi';
 
 const Users = () => {
     const [modalState, setModalState] = useState({ type: null, data: null });
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [pageNo, setPageNo] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+
+    const fetchUsers = async () => {
+        setLoading(true);
+        try {
+            const response = await getAllUsers({ pageNo, pageSize: 10 });
+            if (response?.success) {
+                setUsers(response.data.items || []);
+                setTotalPages(response.data.totalPages || 1);
+                setTotalItems(response.data.totalItems || 0);
+            }
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, [pageNo]);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -86,104 +81,126 @@ const Users = () => {
                         <TableHeader className="bg-transparent border-b border-border/40">
                             <TableRow className="hover:bg-transparent border-0">
                                 <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider pl-6 h-12">ID</TableHead>
-                                <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-12">Tên tài khoản</TableHead>
-                                <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-12">Tên người dùng</TableHead>
+                                <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-12">Họ và Tên</TableHead>
                                 <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-12">Email</TableHead>
-                                <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-12 text-center">Trạng thái</TableHead>
+                                <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-12">Số điện thoại</TableHead>
+                                <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-12 text-center">Vai trò</TableHead>
                                 <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider pr-6 text-right h-12">Hành động</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {mockUsers.map((item) => (
-                                <TableRow key={item.id} className="border-b border-border/20 hover:bg-white/5 transition-colors group">
-                                    <TableCell className="pl-6 py-5">
-                                        <p className="font-medium text-xs text-zinc-400">{item.id}</p>
-                                    </TableCell>
-                                    <TableCell className="py-5">
-                                        <span className="text-sm text-gray-200 font-medium">{item.username}</span>
-                                    </TableCell>
-                                    <TableCell className="py-5">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-7 w-7 rounded-full bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0">
-                                                <User className="h-3.5 w-3.5 text-zinc-400" />
-                                            </div>
-                                            <span className="text-sm text-zinc-300">{item.fullName}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="py-5">
-                                        <span className="text-sm text-zinc-400">{item.email}</span>
-                                    </TableCell>
-                                    <TableCell className="py-5">
-                                        <div className="flex items-center justify-center">
-                                            {item.status === 'Hoạt động' ? (
-                                                <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-full w-min whitespace-nowrap">
-                                                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] leading-none" />
-                                                    <span className="text-[11px] font-medium text-emerald-500 leading-none pb-[1px]">{item.status}</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-full w-min whitespace-nowrap text-center mx-auto">
-                                                    <div className="h-1.5 w-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)] leading-none" />
-                                                    <span className="text-[11px] font-medium text-red-500 leading-none pb-[1px]">{item.status}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="pr-6 py-5 text-right">
-                                        <div className="flex items-center justify-end gap-2 text-zinc-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
-                                            <button
-                                                onClick={() => setModalState({ type: 'edit', data: item })}
-                                                className="p-1.5 hover:text-white transition-colors border border-transparent hover:bg-zinc-800 rounded-md"
-                                                title="Chỉnh sửa hoặc xem chi tiết"
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                            </button>
-                                            <button
-                                                className="p-1.5 hover:text-red-500 transition-colors border border-transparent hover:bg-zinc-800 rounded-md"
-                                                title={item.status === 'Đã khóa' ? "Mở khóa tài khoản" : "Khóa tài khoản"}
-                                            >
-                                                <Shield className="h-4 w-4" />
-                                            </button>
-                                            <button
-                                                className="p-1.5 hover:text-red-500 transition-colors border border-transparent hover:bg-zinc-800 rounded-md"
-                                                title="Xóa tài khoản"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
-                                        </div>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-32 text-center text-zinc-500">
+                                        Đang tải dữ liệu...
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            ) : users.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-32 text-center text-zinc-500">
+                                        Không tìm thấy tài khoản nào.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                users.map((item) => (
+                                    <TableRow key={item.id} className="border-b border-border/20 hover:bg-white/5 transition-colors group">
+                                        <TableCell className="pl-6 py-5">
+                                            <p className="font-medium text-xs text-zinc-500 font-mono">#{item.id}</p>
+                                        </TableCell>
+                                        <TableCell className="py-5">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-7 w-7 rounded-full bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0">
+                                                    <User className="h-3.5 w-3.5 text-zinc-400" />
+                                                </div>
+                                                <span className="text-sm text-white font-medium">{item.full_name}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="py-5">
+                                            <span className="text-sm text-zinc-400">{item.email}</span>
+                                        </TableCell>
+                                        <TableCell className="py-5">
+                                            <span className="text-sm text-zinc-400">{item.phone || '-'}</span>
+                                        </TableCell>
+                                        <TableCell className="py-5 text-center">
+                                            <div className="flex flex-col items-center">
+                                                {item.role === 'ADMIN' ? (
+                                                    <span className="text-[11px] text-purple-400 bg-purple-400/10 px-2.5 py-1 rounded-full border border-purple-400/20 font-bold uppercase tracking-wider">
+                                                        Admin
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[11px] text-blue-400 bg-blue-400/10 px-2.5 py-1 rounded-full border border-blue-400/20 font-bold uppercase tracking-wider">
+                                                        User
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="pr-6 py-5 text-right">
+                                            {!item.is_deleted && (
+                                                <div className="flex items-center justify-end gap-2 text-zinc-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+                                                    <button
+                                                        onClick={() => setModalState({ type: 'edit', data: item })}
+                                                        className="p-1.5 hover:text-white transition-colors border border-transparent hover:bg-zinc-800 rounded-md"
+                                                        title="Chỉnh sửa hoặc xem chi tiết"
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setModalState({ type: 'delete', data: item })}
+                                                        className="p-1.5 hover:text-red-500 transition-colors border border-transparent hover:bg-zinc-800 rounded-md bg-red-500/5 hover:bg-red-500/20"
+                                                        title="Xóa tài khoản"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </div>
 
-                {/* Pagination */}
-                <div className="flex items-center justify-between px-6 py-4 bg-surface/50 border-t border-border/40">
-                    <span className="text-xs font-medium text-zinc-500">
-                        Hiển thị 1-4 trong 24 tài khoản
-                    </span>
-                    <div className="flex items-center gap-1">
-                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white transition-colors">
-                            &lt;
-                        </button>
-                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-md shadow-primary/20 font-medium text-sm">
-                            1
-                        </button>
-                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors text-sm">
-                            2
-                        </button>
-                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors text-sm">
-                            3
-                        </button>
-                        <span className="px-1 text-zinc-500">...</span>
-                        <button className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white transition-colors">
-                            &gt;
-                        </button>
+                {!loading && users.length > 0 && (
+                    <div className="flex items-center justify-between px-6 py-4 bg-surface/50 border-t border-border/40">
+                        <span className="text-xs font-medium text-zinc-500">
+                            Hiển thị {(pageNo - 1) * 10 + 1}-{Math.min(pageNo * 10, totalItems)} trong {totalItems} tài khoản
+                        </span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setPageNo(p => Math.max(1, p - 1))}
+                                disabled={pageNo === 1}
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white transition-colors disabled:opacity-50"
+                            >
+                                &lt;
+                            </button>
+
+                            {[...Array(totalPages)].map((_, i) => (
+                                <button
+                                    key={i + 1}
+                                    onClick={() => setPageNo(i + 1)}
+                                    className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors text-sm ${pageNo === i + 1
+                                        ? "bg-primary text-white shadow-md shadow-primary/20 font-medium"
+                                        : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white"
+                                        }`}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+
+                            <button
+                                onClick={() => setPageNo(p => Math.min(totalPages, p + 1))}
+                                disabled={pageNo === totalPages}
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white transition-colors disabled:opacity-50"
+                            >
+                                &gt;
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
-            <UserModals state={modalState} onClose={() => setModalState({ type: null, data: null })} />
+            <UserModals state={modalState} onClose={() => setModalState({ type: null, data: null })} onRefresh={fetchUsers} />
         </div>
     );
 };

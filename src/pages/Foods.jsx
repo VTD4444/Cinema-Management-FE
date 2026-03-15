@@ -66,12 +66,12 @@ const Foods = () => {
         },
         {
             title: 'Sản phẩm đang bán',
-            value: (foods || []).filter(f => f.is_available).length.toString(), // Approximated from current page or backend could provide
+            value: (foods || []).filter(f => !f.is_deleted).length.toString(), // Approximated from current page or backend could provide
             icon: CheckCircle2,
         },
         {
             title: 'Ngừng kinh doanh',
-            value: (foods || []).filter(f => !f.is_available).length.toString(), // Approximated from current page
+            value: (foods || []).filter(f => f.is_deleted).length.toString(), // Approximated from current page
             icon: AlertCircle,
         },
     ];
@@ -113,7 +113,7 @@ const Foods = () => {
 
             {/* Controls & Table Background Container */}
             <div className="rounded-xl border border-border bg-surface/30 p-1 flex flex-col gap-1 overflow-hidden shadow-sm">
-                <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between border-b border-border/50 bg-surface/50 rounded-t-lg">
+                {/* <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between border-b border-border/50 bg-surface/50 rounded-t-lg">
                     <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
                         <div className="flex bg-zinc-900/80 p-1 rounded-full border border-zinc-800/60 shadow-inner">
                             {['Tất cả', 'Đồ ăn', 'Thức uống', 'Combo'].map((tab) => (
@@ -141,14 +141,13 @@ const Foods = () => {
                             <span>Xuất Excel</span>
                         </Button>
                     </div>
-                </div>
+                </div> */}
 
                 <div className="p-0 bg-transparent border-t border-border/50">
                     <Table className="border-0 rounded-none bg-transparent">
                         <TableHeader className="bg-transparent border-b border-border/40">
                             <TableRow className="hover:bg-transparent border-0">
                                 <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-6">Thông tin sản phẩm</TableHead>
-                                <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Loại</TableHead>
                                 <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Giá bán</TableHead>
                                 <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider min-w-[150px]">Tồn kho</TableHead>
                                 <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Trạng thái</TableHead>
@@ -158,11 +157,11 @@ const Foods = () => {
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-zinc-500">Đang tải dữ liệu...</TableCell>
+                                    <TableCell colSpan={5} className="text-center py-8 text-zinc-500">Đang tải dữ liệu...</TableCell>
                                 </TableRow>
                             ) : !foods || foods.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-zinc-500">Không tìm thấy đồ ăn nào</TableCell>
+                                    <TableCell colSpan={5} className="text-center py-8 text-zinc-500">Không tìm thấy đồ ăn nào</TableCell>
                                 </TableRow>
                             ) : foods.map((item) => (
                                 <TableRow key={item.id} className="border-b border-border/20 hover:bg-white/5 transition-colors group">
@@ -185,16 +184,6 @@ const Foods = () => {
                                                 <p className="text-[11px] text-zinc-500 font-medium mt-0.5 tracking-wide">Mã: {item.id}</p>
                                             </div>
                                         </div>
-                                    </TableCell>
-
-                                    {/* Type (Hardcoded to Đồ ăn for now or derived if you had a category field) */}
-                                    <TableCell className="py-4">
-                                        <Badge
-                                            variant="primary"
-                                            className="bg-opacity-10 border border-current/20 font-semibold"
-                                        >
-                                            Đồ ăn
-                                        </Badge>
                                     </TableCell>
 
                                     {/* Price */}
@@ -227,11 +216,29 @@ const Foods = () => {
                                     {/* Status */}
                                     <TableCell className="py-4">
                                         {(() => {
-                                            const isSelling = item.is_deleted;
+                                            const isDeleted = item.is_deleted;
+                                            const isAvailable = item.is_available;
+                                            
+                                            let statusText = 'Ngừng kinh doanh';
+                                            let dotColor = 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]';
+                                            let textColor = 'text-red-500';
+
+                                            if (!isDeleted) {
+                                                if (isAvailable === false || isAvailable === 0) {
+                                                    statusText = 'Đang bán (hết hàng)';
+                                                    dotColor = 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]';
+                                                    textColor = 'text-amber-500';
+                                                } else {
+                                                    statusText = 'Đang bán';
+                                                    dotColor = 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]';
+                                                    textColor = 'text-emerald-500';
+                                                }
+                                            }
+
                                             return (
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`h-1.5 w-1.5 rounded-full ${isSelling === false ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
-                                                    <span className={`text-xs font-medium ${isSelling === false ? 'text-emerald-500' : 'text-red-500'}`}>{isSelling === false ? 'Đang bán' : 'Ngừng kinh doanh'}</span>
+                                                    <div className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
+                                                    <span className={`text-xs font-medium ${textColor}`}>{statusText}</span>
                                                 </div>
                                             );
                                         })()}
@@ -239,14 +246,16 @@ const Foods = () => {
 
                                     {/* Actions */}
                                     <TableCell className="pr-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
-                                            <button onClick={() => setModalState({ type: 'edit', data: item })} className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
-                                                <Pencil className="h-4 w-4" />
-                                            </button>
-                                            <button onClick={() => setModalState({ type: 'delete', data: item })} className="p-2 rounded-full text-zinc-400 hover:text-red-500 hover:bg-zinc-800 transition-all">
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
-                                        </div>
+                                        {!item.is_deleted && (
+                                            <div className="flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+                                                <button onClick={() => setModalState({ type: 'edit', data: item })} className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
+                                                    <Pencil className="h-4 w-4" />
+                                                </button>
+                                                <button onClick={() => setModalState({ type: 'delete', data: item })} className="p-2 rounded-full text-zinc-400 hover:text-red-500 hover:bg-zinc-800 transition-all">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}

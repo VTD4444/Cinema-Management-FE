@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Trash2, Pencil } from 'lucide-react';
 import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import VoucherModals from '../components/features/voucher/VoucherModals';
 import { getVouchersAdmin, createVoucher, updateVoucher, deleteVoucher } from '../api/voucherApi';
@@ -211,22 +211,16 @@ const Vouchers = () => {
                                             )}
                                         </TableCell>
                                         <TableCell className="pr-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-1 text-zinc-500 opacity-80 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => setModalState({ type: 'edit', data: item })}
-                                                    className="p-2 hover:bg-zinc-800 hover:text-white rounded-lg transition-colors"
-                                                    title="Chỉnh sửa"
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => setModalState({ type: 'delete', data: item })}
-                                                    className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors"
-                                                    title="Xóa"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            </div>
+                                            {!item.is_deleted && (
+                                                <div className="flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+                                                    <button onClick={() => setModalState({ type: 'edit', data: item })} className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
+                                                        <Pencil className="h-4 w-4" />
+                                                    </button>
+                                                    <button onClick={() => setModalState({ type: 'delete', data: item })} className="p-2 rounded-full text-zinc-400 hover:text-red-500 hover:bg-zinc-800 transition-all">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))
