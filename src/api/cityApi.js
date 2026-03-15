@@ -4,16 +4,24 @@ import axiosClient from './axiosClient';
  * API tỉnh/thành phố (Provinces trong DB)
  * Schema DB: id, name, created_at, updated_at
  * Optional/display: code (mã định danh), cinema_complex_count (tính từ Cinemas)
+ *
+ * Backend:
+ * - /provinces         (GET user, POST admin)
+ * - /provinces/{id}    (PATCH, DELETE admin)
+ * - /provinces/admin   (GET admin)
+ *
+ * FE đang gọi "cities" nhưng backend dùng "provinces" → map lại cho khớp.
  */
 
-const CITIES_BASE = '/cities';
+const CITIES_BASE = '/provinces';
 
 /**
  * Lấy danh sách tỉnh/thành phố (phân trang, tìm kiếm)
  * @param {{ page?: number, limit?: number, search?: string }} params
  */
 export const getCities = (params = {}) => {
-  return axiosClient.get(CITIES_BASE, { params });
+  // Dùng endpoint admin để phù hợp luồng quản trị (GET /provinces/admin)
+  return axiosClient.get(`${CITIES_BASE}/admin`, { params });
 };
 
 /**
@@ -38,7 +46,8 @@ export const createCity = (payload) => {
  * @param {{ name?: string, code?: string }} payload
  */
 export const updateCity = (id, payload) => {
-  return axiosClient.put(`${CITIES_BASE}/${id}`, payload);
+  // Backend dùng PATCH /provinces/{id}
+  return axiosClient.patch(`${CITIES_BASE}/${id}`, payload);
 };
 
 /**

@@ -38,7 +38,8 @@ export const createSeat = (payload) => {
  * @param {Object} payload
  */
 export const updateSeat = (id, payload) => {
-  return axiosClient.put(`${SEATS_BASE}/${id}`, payload);
+  // Backend dùng PATCH /seats/{id}
+  return axiosClient.patch(`${SEATS_BASE}/${id}`, payload);
 };
 
 /**

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './components/layout';
+import useAuthStore from './store/useAuthStore';
 import Dashboard from './pages/Dashboard';
 import Movies from './pages/Movies';
 import Genres from './pages/Genres';
@@ -17,17 +18,53 @@ import Users from './pages/Users';
 import Checkins from './pages/Checkins';
 import Feedbacks from './pages/Feedbacks';
 import Login from './pages/Login';
+
+const ProtectedRoute = ({ children }) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+
+  const hasToken = typeof window !== 'undefined' && localStorage.getItem('accessToken');
+  const role = user?.role || (typeof window !== 'undefined' && localStorage.getItem('userRole'));
+
+  // Chưa đăng nhập → về trang login
+  if (!isAuthenticated && !hasToken) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Đã đăng nhập nhưng không phải ADMIN → về login
+  if (role && role !== 'ADMIN') {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+const RootRedirect = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasToken = typeof window !== 'undefined' && localStorage.getItem('accessToken');
+
+  if (isAuthenticated || hasToken) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Navigate to="/login" replace />;
+};
+
 function App() {
   return (
     <Routes>
       {/* Public Routes */}
       <Route path="/login" element={<Login />} />
+      <Route path="/" element={<RootRedirect />} />
 
       {/* Protected Area */}
-      <Route element={<AppShell />}>
-        {/* Default route redirects to dashboard */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppShell />
+          </ProtectedRoute>
+        }
+      >
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/movies" element={<Movies />} />
         <Route path="/movies/genres" element={<Genres />} />
@@ -43,7 +80,7 @@ function App() {
         <Route path="/feedbacks" element={<Feedbacks />} />
         <Route path="/check-in" element={<Checkins />} />
 
-        {/* Fallback route - could be a 404 page later */}
+        {/* Fallback route - có thể thay bằng trang 404 riêng */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>

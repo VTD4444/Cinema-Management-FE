@@ -3,9 +3,14 @@ import axiosClient from './axiosClient';
 /**
  * API phim – response format: { success, message, data }
  * data theo schema: Movies (id, title, duration, directors_name, release_date, description, poster_urls, trailer_url, status, genres?)
+ *
+ * Backend:
+ * - GET /movies        → cho user
+ * - GET /movies/admin  → cho admin (bao gồm cả đã soft delete)
  */
 
 const MOVIES_BASE = '/movies';
+const MOVIES_ADMIN_BASE = '/movies/admin';
 const GENRES_BASE = '/genres';
 
 /**
@@ -14,7 +19,8 @@ const GENRES_BASE = '/genres';
  * @returns {Promise<{ success: boolean, message: string, data: { items: Array, total: number } }>}
  */
 export const getMovies = (params = {}) => {
-  return axiosClient.get(MOVIES_BASE, { params });
+  // Dùng endpoint admin để phù hợp backend (GET /movies/admin)
+  return axiosClient.get(MOVIES_ADMIN_BASE, { params });
 };
 
 /**
@@ -39,7 +45,8 @@ export const createMovie = (payload) => {
  * @param {Object} payload - cùng cấu trúc createMovie
  */
 export const updateMovie = (id, payload) => {
-  return axiosClient.put(`${MOVIES_BASE}/${id}`, payload);
+  // Backend dùng PATCH /movies/{id}
+  return axiosClient.patch(`${MOVIES_BASE}/${id}`, payload);
 };
 
 /**

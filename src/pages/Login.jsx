@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Input, Button } from '../components/ui';
 import { login } from '../api/authApi';
 import { Package } from 'lucide-react';
+import useAuthStore from '../store/useAuthStore';
 
 const Login = () => {
   const navigate = useNavigate();
+  const authLogin = useAuthStore((state) => state.login);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -25,15 +27,17 @@ const Login = () => {
 
     try {
       const response = await login(formData);
-      
-      if (response && response.data && response.data.accessToken) {
-        // Store the token and role
-        localStorage.setItem('accessToken', response.data.accessToken);
-        if (response.data.role) {
-            localStorage.setItem('userRole', response.data.role);
-        }
-        
-        // Redirect to dashboard
+
+      // response format từ backend qua axiosClient:
+      // { success, message, data: { accessToken, role } }
+      const token = response?.data?.accessToken;
+      const role = response?.data?.role;
+
+      if (token) {
+        // Lưu vào store (và localStorage thông qua store)
+        authLogin({ role }, token);
+
+        // Điều hướng vào dashboard admin
         navigate('/dashboard');
       } else {
         setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
