@@ -6,7 +6,7 @@ import { handleApiError } from '../../../utils/errorHandling';
 const CityModals = ({ state, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [formData, setFormData] = useState({ code: '', name: '' });
+  const [formData, setFormData] = useState({ name: '' });
 
   const isDelete = state.type === 'delete';
   const isAddOrEdit = state.type === 'add' || state.type === 'edit';
@@ -14,9 +14,9 @@ const CityModals = ({ state, onClose, onSuccess }) => {
 
   useEffect(() => {
     if (state.type === 'edit' && data) {
-      setFormData({ code: data.code ?? '', name: data.name ?? '' });
+      setFormData({ name: data.name ?? '' });
     } else if (state.type === 'add') {
-      setFormData({ code: '', name: '' });
+      setFormData({ name: '' });
     }
     setError('');
   }, [state.type, state.data]);
@@ -25,7 +25,7 @@ const CityModals = ({ state, onClose, onSuccess }) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const payload = { code: formData.code.trim(), name: formData.name.trim() };
+    const payload = { name: formData.name.trim() };
     const request = state.type === 'add' ? createCity(payload) : updateCity(data.id, payload);
     request
       .then((res) => {
@@ -85,15 +85,6 @@ const CityModals = ({ state, onClose, onSuccess }) => {
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
-          <Input
-            label="Mã định danh"
-            placeholder="VD: HCM, HNI"
-            value={formData.code}
-            onChange={(e) => { setFormData((p) => ({ ...p, code: e.target.value })); setError(''); }}
-            className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11 uppercase"
-            maxLength={10}
-            required
-          />
           <Input
             label="Tên tỉnh/thành phố"
             placeholder="VD: TP. Hồ Chí Minh"

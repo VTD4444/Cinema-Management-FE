@@ -46,7 +46,6 @@ export const createCity = (payload) => {
  * @param {{ name?: string, code?: string }} payload
  */
 export const updateCity = (id, payload) => {
-  // Backend dùng PATCH /provinces/{id}
   return axiosClient.patch(`${CITIES_BASE}/${id}`, payload);
 };
 

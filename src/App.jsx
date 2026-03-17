@@ -18,6 +18,10 @@ import Users from './pages/Users';
 import Checkins from './pages/Checkins';
 import Feedbacks from './pages/Feedbacks';
 import Login from './pages/Login';
+import UserLogin from './pages/UserLogin';
+import UserRegister from './pages/UserRegister';
+import UserForgotPassword from './pages/UserForgotPassword';
+import UserHome from './pages/UserHome';
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -26,25 +30,35 @@ const ProtectedRoute = ({ children }) => {
   const hasToken = typeof window !== 'undefined' && localStorage.getItem('accessToken');
   const role = user?.role || (typeof window !== 'undefined' && localStorage.getItem('userRole'));
 
-  // Chưa đăng nhập → về trang login
+  // Chưa đăng nhập → về trang login admin
   if (!isAuthenticated && !hasToken) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
-  // Đã đăng nhập nhưng không phải ADMIN → về login
+  // Đã đăng nhập nhưng không phải ADMIN → về login admin
   if (role && role !== 'ADMIN') {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   return children;
 };
 
-const RootRedirect = () => {
+const AdminRootRedirect = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const hasToken = typeof window !== 'undefined' && localStorage.getItem('accessToken');
 
   if (isAuthenticated || hasToken) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  return <Navigate to="/admin/login" replace />;
+};
+
+const UserRootRedirect = () => {
+  const hasUserToken = typeof window !== 'undefined' && localStorage.getItem('userAccessToken');
+
+  if (hasUserToken) {
+    return <Navigate to="/home" replace />;
   }
 
   return <Navigate to="/login" replace />;
@@ -53,11 +67,18 @@ const RootRedirect = () => {
 function App() {
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/" element={<RootRedirect />} />
+      {/* User-facing routes */}
+      <Route path="/" element={<UserRootRedirect />} />
+      <Route path="/home" element={<UserHome />} />
+      <Route path="/login" element={<UserLogin />} />
+      <Route path="/register" element={<UserRegister />} />
+      <Route path="/forgot-password" element={<UserForgotPassword />} />
 
-      {/* Protected Area */}
+      {/* Admin public routes */}
+      <Route path="/admin/login" element={<Login />} />
+      <Route path="/admin" element={<AdminRootRedirect />} />
+
+      {/* Admin protected area */}
       <Route
         element={
           <ProtectedRoute>
@@ -65,23 +86,23 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/movies" element={<Movies />} />
-        <Route path="/movies/genres" element={<Genres />} />
-        <Route path="/cinemas/cities" element={<Cities />} />
-        <Route path="/cinemas" element={<Cinemas />} />
-        <Route path="/cinemas/rooms" element={<Rooms />} />
-        <Route path="/cinemas/seats" element={<Seats />} />
-        <Route path="/showtimes" element={<Showtimes />} />
-        <Route path="/foods" element={<Foods />} />
-        <Route path="/vouchers" element={<Vouchers />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/users" element={<Users />} />
-        <Route path="/feedbacks" element={<Feedbacks />} />
-        <Route path="/check-in" element={<Checkins />} />
+        <Route path="/admin/dashboard" element={<Dashboard />} />
+        <Route path="/admin/movies" element={<Movies />} />
+        <Route path="/admin/movies/genres" element={<Genres />} />
+        <Route path="/admin/cinemas/cities" element={<Cities />} />
+        <Route path="/admin/cinemas" element={<Cinemas />} />
+        <Route path="/admin/cinemas/rooms" element={<Rooms />} />
+        <Route path="/admin/cinemas/seats" element={<Seats />} />
+        <Route path="/admin/showtimes" element={<Showtimes />} />
+        <Route path="/admin/foods" element={<Foods />} />
+        <Route path="/admin/vouchers" element={<Vouchers />} />
+        <Route path="/admin/orders" element={<Orders />} />
+        <Route path="/admin/users" element={<Users />} />
+        <Route path="/admin/feedbacks" element={<Feedbacks />} />
+        <Route path="/admin/check-in" element={<Checkins />} />
 
-        {/* Fallback route - có thể thay bằng trang 404 riêng */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* Fallback route trong khu vực admin */}
+        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
       </Route>
     </Routes>
   );

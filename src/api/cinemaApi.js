@@ -18,7 +18,6 @@ const CINEMAS_BASE = '/cinemas';
  * @param {{ page?: number, limit?: number, search?: string, city_id?: number, province_id?: number }} params
  */
 export const getCinemas = (params = {}) => {
-  // Dùng endpoint admin để phù hợp backend (GET /cinemas/admin)
   return axiosClient.get(`${CINEMAS_BASE}/admin`, { params });
 };
 
@@ -44,7 +43,6 @@ export const createCinema = (payload) => {
  * @param {Object} payload
  */
 export const updateCinema = (id, payload) => {
-  // Backend dùng PATCH /cinemas/{id}
   return axiosClient.patch(`${CINEMAS_BASE}/${id}`, payload);
 };
 

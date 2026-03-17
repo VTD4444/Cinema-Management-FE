@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Input, Button } from '../../ui';
+import { Modal, Input, Button, Select } from '../../ui';
 import { createCinema, updateCinema, deleteCinema } from '../../../api/cinemaApi';
 import { handleApiError } from '../../../utils/errorHandling';
+import { getCities } from '../../../api/cityApi';
 
 const CinemaModals = ({ state, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -9,24 +10,34 @@ const CinemaModals = ({ state, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     address: '',
-    city_name: '',
+    province_id: '',
     room_count: '',
   });
+  const [provinces, setProvinces] = useState([]);
 
   const isDelete = state.type === 'delete';
   const isAddOrEdit = state.type === 'add' || state.type === 'edit';
   const data = state.data;
 
   useEffect(() => {
+    // Load danh sách tỉnh/thành phố cho select
+    getCities()
+      .then((res) => {
+        const raw = res?.data ?? res;
+        const list = Array.isArray(raw?.items) ? raw.items : Array.isArray(raw) ? raw : [];
+        setProvinces(list);
+      })
+      .catch(() => setProvinces([]));
+
     if (state.type === 'edit' && data) {
       setFormData({
         name: data.name ?? '',
         address: data.address ?? '',
-        city_name: data.city_name ?? '',
+        province_id: data.province_id != null ? String(data.province_id) : '',
         room_count: data.room_count != null ? String(data.room_count) : '',
       });
     } else if (state.type === 'add') {
-      setFormData({ name: '', address: '', city_name: '', room_count: '' });
+      setFormData({ name: '', address: '', province_id: '', room_count: '' });
     }
     setError('');
   }, [state.type, state.data]);
@@ -38,7 +49,7 @@ const CinemaModals = ({ state, onClose, onSuccess }) => {
     const payload = {
       name: formData.name.trim(),
       address: formData.address.trim(),
-      city_name: formData.city_name.trim() || undefined,
+      province_id: formData.province_id ? Number(formData.province_id) : undefined,
       room_count: formData.room_count ? parseInt(formData.room_count, 10) : undefined,
     };
     const request = state.type === 'add' ? createCinema(payload) : updateCinema(data.id, payload);
@@ -114,13 +125,20 @@ const CinemaModals = ({ state, onClose, onSuccess }) => {
             className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
             required
           />
-          <Input
+          <Select
             label="Tỉnh/Thành phố"
-            placeholder="VD: Hà Nội, TP. Hồ Chí Minh"
-            value={formData.city_name}
-            onChange={(e) => { setFormData((p) => ({ ...p, city_name: e.target.value })); setError(''); }}
+            value={formData.province_id}
+            onChange={(e) => { setFormData((p) => ({ ...p, province_id: e.target.value })); setError(''); }}
             className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
-          />
+            required
+          >
+            <option value="">Chọn tỉnh/thành phố</option>
+            {provinces.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </Select>
           <Input
             label="Số phòng chiếu"
             type="number"

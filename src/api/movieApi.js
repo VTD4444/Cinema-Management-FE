@@ -14,13 +14,21 @@ const MOVIES_ADMIN_BASE = '/movies/admin';
 const GENRES_BASE = '/genres';
 
 /**
- * Lấy danh sách phim có phân trang, tìm kiếm, lọc trạng thái
+ * Lấy danh sách phim cho admin (có phân trang, tìm kiếm, lọc trạng thái)
  * @param {{ page?: number, limit?: number, search?: string, status?: 'showing'|'coming_soon'|'passed' }} params
  * @returns {Promise<{ success: boolean, message: string, data: { items: Array, total: number } }>}
  */
 export const getMovies = (params = {}) => {
   // Dùng endpoint admin để phù hợp backend (GET /movies/admin)
   return axiosClient.get(MOVIES_ADMIN_BASE, { params });
+};
+
+/**
+ * Lấy danh sách phim cho user (chỉ phim đang hoạt động)
+ * @param {{ pageNo?: number, pageSize?: number, status?: 'SHOWING'|'COMING_SOON'|'PASSED' }} params
+ */
+export const getMoviesPublic = (params = {}) => {
+  return axiosClient.get(MOVIES_BASE, { params });
 };
 
 /**

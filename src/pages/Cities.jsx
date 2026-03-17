@@ -106,8 +106,7 @@ const Cities = () => {
           <Table className="border-0 rounded-none bg-transparent">
             <TableHeader className="bg-transparent border-b border-border/40">
               <TableRow className="hover:bg-transparent border-0">
-                <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-6">Mã định danh</TableHead>
-                <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Tên tỉnh/thành phố</TableHead>
+                <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-6">Tên tỉnh/thành phố</TableHead>
                 <TableHead className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pr-6 text-right">Hành động</TableHead>
               </TableRow>
             </TableHeader>
@@ -123,8 +122,7 @@ const Cities = () => {
               ) : (
                 cities.map((city) => (
                   <TableRow key={city.id} className="border-b border-border/20 hover:bg-white/5 transition-colors group">
-                    <TableCell className="pl-6 py-4 font-mono font-medium text-zinc-300 uppercase">{city.code}</TableCell>
-                    <TableCell className="py-4">
+                    <TableCell className="pl-6 py-4">
                       <div>
                         <p className="text-gray-200 font-medium">{city.name}</p>
                         {typeof city.cinema_complex_count === 'number' && (

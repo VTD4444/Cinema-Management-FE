@@ -36,7 +36,7 @@ axiosClient.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Handle unauthorized error (logout user, redirect to login page)
       localStorage.removeItem('accessToken');
-      window.location.href = '/login'; // Assuming basic redirect for now
+      window.location.href = '/admin/login'; // Redirect về trang login admin
     }
     return Promise.reject(error);
   }

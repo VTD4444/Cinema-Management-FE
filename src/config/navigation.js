@@ -14,62 +14,62 @@ import {
 export const NAVIGATION_ITEMS = [
   {
     name: 'Tổng quan',
-    href: '/dashboard',
+    href: '/admin/dashboard',
     icon: LayoutDashboard,
   },
   {
     name: 'Phim',
-    href: '/movies',
+    href: '/admin/movies',
     icon: Film,
     children: [
-      { name: 'Danh sách Phim', href: '/movies' },
-      { name: 'Thể loại', href: '/movies/genres' },
+      { name: 'Danh sách Phim', href: '/admin/movies' },
+      { name: 'Thể loại', href: '/admin/movies/genres' },
     ],
   },
   {
     name: 'Rạp',
-    href: '/cinemas',
+    href: '/admin/cinemas',
     icon: MonitorPlay,
     children: [
-      { name: 'Tỉnh/Thành phố', href: '/cinemas/cities' },
-      { name: 'Danh sách Rạp', href: '/cinemas' },
-      { name: 'Phòng chiếu & Ghế', href: '/cinemas/rooms' },
-      { name: 'Ghế', href: '/cinemas/seats' },
+      { name: 'Tỉnh/Thành phố', href: '/admin/cinemas/cities' },
+      { name: 'Danh sách Rạp', href: '/admin/cinemas' },
+      { name: 'Phòng chiếu & Ghế', href: '/admin/cinemas/rooms' },
+      { name: 'Ghế', href: '/admin/cinemas/seats' },
     ],
   },
   {
     name: 'Lịch chiếu',
-    href: '/showtimes',
+    href: '/admin/showtimes',
     icon: CalendarDays,
   },
   {
     name: 'Đồ ăn / Thức uống',
-    href: '/foods',
+    href: '/admin/foods',
     icon: Utensils,
   },
   {
     name: 'Voucher',
-    href: '/vouchers',
+    href: '/admin/vouchers',
     icon: Ticket,
   },
   {
     name: 'Check-in',
-    href: '/check-in',
+    href: '/admin/check-in',
     icon: ScanLine,
   },
   {
     name: 'Đơn hàng',
-    href: '/orders',
+    href: '/admin/orders',
     icon: Receipt,
   },
   {
     name: 'Người dùng',
-    href: '/users',
+    href: '/admin/users',
     icon: Users,
   },
   {
     name: 'Phản hồi',
-    href: '/feedbacks',
+    href: '/admin/feedbacks',
     icon: MessageSquare,
   },
 ];
