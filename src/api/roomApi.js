@@ -6,7 +6,7 @@ import axiosClient from './axiosClient';
  * Các trường room_type, seat_count, format, status cần bổ sung vào DB (migration) để khớp UI.
  */
 
-const ROOMS_BASE = '/rooms';
+const ROOMS_BASE = '/cinema-rooms';
 
 /**
  * Lấy danh sách phòng chiếu theo rạp

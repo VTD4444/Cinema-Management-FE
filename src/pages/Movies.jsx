@@ -24,9 +24,9 @@ import { getMovies } from '../api/movieApi';
 
 const STATUS_FILTER_OPTIONS = [
   { value: '', label: 'Tất cả trạng thái' },
-  { value: 'showing', label: 'Đang chiếu' },
-  { value: 'coming_soon', label: 'Sắp chiếu' },
-  { value: 'passed', label: 'Đã dừng' },
+  { value: 'SHOWING', label: 'Đang chiếu' },
+  { value: 'COMING_SOON', label: 'Sắp chiếu' },
+  { value: 'PASSED', label: 'Đã dừng' },
 ];
 
 const PAGE_SIZE = 8;
@@ -40,11 +40,12 @@ const formatReleaseDate = (dateStr) => {
 
 const getStatusBadge = (status) => {
   const map = {
-    showing: { label: 'Đang chiếu', variant: 'success', dotClass: 'bg-emerald-500' },
-    coming_soon: { label: 'Sắp chiếu', variant: 'warning', dotClass: 'bg-amber-500' },
-    passed: { label: 'Đã dừng', variant: 'default', dotClass: 'bg-zinc-500' },
+    SHOWING: { label: 'Đang chiếu', variant: 'success', dotClass: 'bg-emerald-500' },
+    COMING_SOON: { label: 'Sắp chiếu', variant: 'warning', dotClass: 'bg-amber-500' },
+    PASSED: { label: 'Đã dừng', variant: 'default', dotClass: 'bg-zinc-500' },
   };
-  const config = map[status] || { label: status, variant: 'default', dotClass: 'bg-zinc-500' };
+  const normalizedStatus = status?.toUpperCase();
+  const config = map[normalizedStatus] || { label: status, variant: 'default', dotClass: 'bg-zinc-500' };
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className={`h-1.5 w-1.5 rounded-full ${config.dotClass}`} />
@@ -284,11 +285,10 @@ const Movies = () => {
                   key={p}
                   type="button"
                   onClick={() => setPage(p)}
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
-                    page === p
+                  className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${page === p
                       ? 'bg-primary text-white border-transparent shadow-md shadow-primary/20'
                       : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800'
-                  }`}
+                    }`}
                 >
                   {p}
                 </button>

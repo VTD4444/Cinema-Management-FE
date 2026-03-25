@@ -50,7 +50,7 @@ const Rooms = () => {
   const filteredCinemas = cinemaId
     ? cinemas.filter((c) => String(c.id) === String(cinemaId))
     : cityId
-      ? cinemas.filter((c) => c.city_id != null && String(c.city_id) === String(cityId))
+      ? cinemas.filter((c) => String(c.province_id || c.city_id) === String(cityId))
       : cinemas;
 
   useEffect(() => {
@@ -60,7 +60,7 @@ const Rooms = () => {
       setRooms([]);
       return;
     }
-    const byCity = cinemas.filter((c) => c.city_id != null && String(c.city_id) === String(cityId));
+    const byCity = cinemas.filter((c) => String(c.province_id || c.city_id) === String(cityId));
     if (byCity.length > 0) {
       setCinemaId((prev) => {
         const stillInCity = byCity.some((c) => String(c.id) === String(prev));
@@ -108,7 +108,7 @@ const Rooms = () => {
   const onModalSuccess = () => fetchRooms();
 
   const cinemaOptions = cityId
-    ? cinemas.filter((c) => c.city_id != null && String(c.city_id) === String(cityId))
+    ? cinemas.filter((c) => String(c.province_id || c.city_id) === String(cityId))
     : cinemas;
 
   return (

@@ -5,9 +5,9 @@ import { getGenres, createMovie, updateMovie, deleteMovie } from '../../../api/m
 import { handleApiError } from '../../../utils/errorHandling';
 
 const STATUS_OPTIONS = [
-  { value: 'showing', label: 'Đang chiếu' },
-  { value: 'coming_soon', label: 'Sắp chiếu' },
-  { value: 'passed', label: 'Đã dừng' },
+  { value: 'SHOWING', label: 'Đang chiếu' },
+  { value: 'COMING_SOON', label: 'Sắp chiếu' },
+  { value: 'PASSED', label: 'Đã dừng' },
 ];
 
 const MovieModals = ({ state, onClose, onSuccess }) => {
@@ -22,7 +22,7 @@ const MovieModals = ({ state, onClose, onSuccess }) => {
     description: '',
     poster_url: '',
     trailer_url: '',
-    status: 'showing',
+    status: 'SHOWING',
     genre_ids: [],
   });
 
@@ -59,7 +59,7 @@ const MovieModals = ({ state, onClose, onSuccess }) => {
         description: data.description ?? '',
         poster_url: posterUrl,
         trailer_url: data.trailer_url ?? '',
-        status: data.status ?? 'showing',
+        status: data.status ?? 'SHOWING',
         genre_ids: (data.genres || []).map((g) => (typeof g === 'object' && g != null && 'id' in g) ? g.id : g).filter(Boolean),
       });
     } else if (state.type === 'add') {
@@ -71,7 +71,7 @@ const MovieModals = ({ state, onClose, onSuccess }) => {
         description: '',
         poster_url: '',
         trailer_url: '',
-        status: 'showing',
+        status: 'SHOWING',
         genre_ids: [],
       });
     }
