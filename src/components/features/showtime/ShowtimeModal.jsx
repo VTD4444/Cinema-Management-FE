@@ -34,8 +34,8 @@ const ShowtimeModal = ({ state, onClose, onSuccess }) => {
     if (isAddOrEdit) {
       getCities()
         .then((res) => {
-          const raw = res?.data ?? res;
-          setCities(Array.isArray(raw) ? raw : []);
+          const items = res?.data?.items || res?.data || [];
+          setCities(Array.isArray(items) ? items : []);
         })
         .catch(() => setCities([]));
 
@@ -106,7 +106,7 @@ const ShowtimeModal = ({ state, onClose, onSuccess }) => {
           if (cinema) {
             setSelectedCityId(String(cinema.province_id || cinema.city_id || ''));
           }
-        }).catch(() => {});
+        }).catch(() => { });
       }
     } else if (state?.type === 'add') {
       setFormData({

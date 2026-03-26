@@ -27,8 +27,8 @@ const Rooms = () => {
   const loadCities = useCallback(() => {
     getCities()
       .then((res) => {
-        const raw = res?.data ?? res;
-        setCities(Array.isArray(raw) ? raw : []);
+        const items = res?.data?.items || res?.data || [];
+        setCities(Array.isArray(items) ? items : []);
       })
       .catch(() => setCities([]));
   }, []);
@@ -36,8 +36,8 @@ const Rooms = () => {
   const loadCinemas = useCallback(() => {
     getCinemas()
       .then((res) => {
-        const raw = res?.data ?? res;
-        setCinemas(Array.isArray(raw) ? raw : []);
+        const items = res?.data?.items || res?.data || [];
+        setCinemas(Array.isArray(items) ? items : []);
       })
       .catch(() => setCinemas([]));
   }, []);
@@ -88,9 +88,9 @@ const Rooms = () => {
     setLoadingRooms(true);
     getRooms({ cinema_id: cinemaId })
       .then((res) => {
-        const raw = res?.data ?? res;
-        if (Array.isArray(raw)) {
-          const byCinema = raw.filter((r) => String(r.cinema_id) === String(cinemaId));
+        const items = res?.data?.items || res?.data || [];
+        if (Array.isArray(items)) {
+          const byCinema = items.filter((r) => String(r.cinema_id) === String(cinemaId));
           setRooms(byCinema);
         } else {
           setRooms([]);

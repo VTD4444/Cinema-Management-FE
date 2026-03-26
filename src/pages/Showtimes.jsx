@@ -88,8 +88,8 @@ const Showtimes = () => {
   useEffect(() => {
     getCities()
       .then((res) => {
-        const raw = res?.data ?? res;
-        setCities(Array.isArray(raw) ? raw : []);
+        const items = res?.data?.items || res?.data || [];
+        setCities(Array.isArray(items) ? items : []);
       })
       .catch(() => setCities([]));
 
