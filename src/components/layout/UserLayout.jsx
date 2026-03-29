@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Search, User, UserCircle, Ticket, CalendarDays } from 'lucide-react';
 
 const UserHeader = () => {
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <header className="flex items-center justify-between px-10 py-4 text-sm text-zinc-100">
-      <div className="flex items-center gap-3">
+    <header className="flex items-center justify-between px-10 py-4 text-sm text-zinc-100 relative z-50">
+      <Link to="/home" className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -28,13 +44,55 @@ const UserHeader = () => {
             Trải nghiệm điện ảnh
           </p>
         </div>
-      </div>
+      </Link>
       <nav className="flex items-center gap-6 text-zinc-300">
         <button className="hover:text-white">Phim</button>
         <button className="hover:text-white">Rạp</button>
-        <button className="hover:text-white">Giới thiệu</button>
+        <Link to="/about" className="hover:text-white">Về chúng tôi</Link>
       </nav>
-      <button className="text-xs text-zinc-300 hover:text-white">Trợ giúp</button>
+      <div className="flex items-center gap-5">
+        <Link to="/search" className="text-zinc-300 hover:text-white transition-colors">
+          <Search className="h-5 w-5" />
+        </Link>
+        <div className="relative" ref={dropdownRef}>
+          <button 
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors"
+          >
+            <User className="h-4 w-4" />
+          </button>
+          
+          {/* Dropdown Menu */}
+          {isProfileOpen && (
+            <div className="absolute right-0 mt-3 w-56 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl overflow-hidden py-2" style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
+              <Link 
+                to="/profile" 
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                onClick={() => setIsProfileOpen(false)}
+              >
+                <UserCircle className="w-4 h-4" />
+                <span>Thông tin cá nhân</span>
+              </Link>
+              <Link 
+                to="/my-vouchers" 
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                onClick={() => setIsProfileOpen(false)}
+              >
+                <Ticket className="w-4 h-4" />
+                <span>Voucher của tôi</span>
+              </Link>
+              <Link 
+                to="/my-tickets" 
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                onClick={() => setIsProfileOpen(false)}
+              >
+                <CalendarDays className="w-4 h-4" />
+                <span>Vé của tôi</span>
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
     </header>
   );
 };
@@ -56,7 +114,7 @@ const UserFooter = () => {
 
 const UserLayout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-zinc-950 to-black text-white flex flex-col">
+    <div className="min-h-screen bg-[#0e0e0e] text-white flex flex-col">
       <UserHeader />
       <main className="flex-1">{children}</main>
       <UserFooter />
@@ -65,4 +123,3 @@ const UserLayout = ({ children }) => {
 };
 
 export default UserLayout;
-

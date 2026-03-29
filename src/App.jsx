@@ -22,6 +22,11 @@ import UserLogin from './pages/UserLogin';
 import UserRegister from './pages/UserRegister';
 import UserForgotPassword from './pages/UserForgotPassword';
 import UserHome from './pages/UserHome';
+import UserSearch from './pages/UserSearch';
+import Profile from './pages/Profile';
+import MyVouchers from './pages/MyVouchers';
+import MyTickets from './pages/MyTickets';
+import AboutUs from './pages/AboutUs';
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -70,6 +75,11 @@ function App() {
       {/* User-facing routes */}
       <Route path="/" element={<UserRootRedirect />} />
       <Route path="/home" element={<UserHome />} />
+      <Route path="/about" element={<AboutUs />} />
+      <Route path="/search" element={<UserSearch />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/my-vouchers" element={<MyVouchers />} />
+      <Route path="/my-tickets" element={<MyTickets />} />
       <Route path="/login" element={<UserLogin />} />
       <Route path="/register" element={<UserRegister />} />
       <Route path="/forgot-password" element={<UserForgotPassword />} />
