@@ -3,6 +3,7 @@ import { Search, Plus, Filter, Edit, Trash2, Pencil } from 'lucide-react';
 import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import VoucherModals from '../components/features/voucher/VoucherModals';
 import { getVouchersAdmin, createVoucher, updateVoucher, deleteVoucher } from '../api/voucherApi';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 // import { toast } from 'react-hot-toast'; // Optional: Use for notifications if needed in the future
 
 const Vouchers = () => {
@@ -21,7 +22,7 @@ const Vouchers = () => {
             const response = await getVouchersAdmin({ pageNo, pageSize: 10 });
 
             // Extract items correctly matching the backend response
-            const items = response?.data?.items || response?.items || [];
+            const items = withoutSoftDeleted(response?.data?.items || response?.items || []);
             if (response?.data?.totalPages || response?.totalPages) {
                 setTotalPages(response?.data?.totalPages || response?.totalPages);
             }

@@ -13,6 +13,7 @@ import {
 import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge } from '../components/ui';
 import FoodModals from '../components/features/food/FoodModals';
 import { getFoodsAdmin } from '../api/foodApi';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 const Foods = () => {
     const [activeTab, setActiveTab] = useState('Tất cả');
@@ -35,7 +36,7 @@ const Foods = () => {
             // Axios interceptor already unwraps response.data, so response here IS the payload body
             if (response?.success) {
                 const data = response.data;
-                setFoods(data?.items || []);
+                setFoods(withoutSoftDeleted(data?.items || []));
                 setPageNo(data?.pageNo || 1);
                 setTotalPages(data?.totalPages || 1);
                 setTotalItems(data?.totalItems || 0);

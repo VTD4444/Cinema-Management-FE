@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getMoviesPublic } from '../api/movieApi';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 import { Button } from '../components/ui';
 import UserLayout from '../components/layout/UserLayout';
 
@@ -51,8 +52,10 @@ const UserHome = () => {
           getMoviesPublic({ status: 'COMING_SOON', pageNo: 1, pageSize: 10 }),
         ]);
 
-        const showing = showingRes?.data?.items || showingRes?.data || [];
-        const coming = comingRes?.data?.items || comingRes?.data || [];
+        const showingRaw = showingRes?.data?.items || showingRes?.data || [];
+        const comingRaw = comingRes?.data?.items || comingRes?.data || [];
+        const showing = withoutSoftDeleted(Array.isArray(showingRaw) ? showingRaw : []);
+        const coming = withoutSoftDeleted(Array.isArray(comingRaw) ? comingRaw : []);
 
         setNowShowing(showing);
         setComingSoon(coming);

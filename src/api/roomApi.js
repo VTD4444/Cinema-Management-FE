@@ -1,4 +1,5 @@
 import axiosClient from './axiosClient';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 /**
  * API phòng chiếu (CinemaRooms trong DB)
@@ -8,9 +9,19 @@ import axiosClient from './axiosClient';
 
 const ROOMS_BASE = '/cinema-rooms';
 
+/** GET /cinema-rooms trả { data: { items, pageNo, ... } } */
+export const getRoomListFromResponse = (res) => {
+  const d = res?.data;
+  let list = [];
+  if (Array.isArray(d?.items)) list = d.items;
+  else if (Array.isArray(d)) list = d;
+  else if (Array.isArray(res)) list = res;
+  return withoutSoftDeleted(list);
+};
+
 /**
  * Lấy danh sách phòng chiếu theo rạp
- * @param {{ cinema_id: number|string }} params
+ * @param {{ cinema_id?: number|string, pageNo?: number, pageSize?: number }} params
  */
 export const getRooms = (params = {}) => {
   return axiosClient.get(ROOMS_BASE, { params });

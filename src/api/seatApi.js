@@ -2,18 +2,60 @@ import axiosClient from './axiosClient';
 
 /**
  * API ghế ngồi (Seats trong DB)
- * Schema DB: id, room_id (FK), row_label (varchar), number (int), type (enum: vip, couple, standard)
- * Optional: is_active cho trạng thái bật/tắt (có thể bổ sung DB sau)
+ * Backend ENUM: STANDARD | VIP | COUPLE — FE form dùng chữ thường, map tại đây.
  */
 
 const SEATS_BASE = '/seats';
 
+const FE_TO_DB_SEAT_TYPE = {
+  standard: 'STANDARD',
+  vip: 'VIP',
+  couple: 'COUPLE',
+};
+
+/** Chuẩn hóa type gửi lên API (khớp ENUM DB) */
+export function toApiSeatType(type) {
+  if (type == null || type === '') return 'STANDARD';
+  const key = String(type).trim().toLowerCase();
+  if (FE_TO_DB_SEAT_TYPE[key]) return FE_TO_DB_SEAT_TYPE[key];
+  const up = String(type).trim().toUpperCase();
+  if (up === 'STANDARD' || up === 'VIP' || up === 'COUPLE') return up;
+  return up;
+}
+
+/** Chuẩn hóa type từ API/DB về key UI: standard | vip | couple */
+export function normalizeSeatTypeForUi(type) {
+  const up = String(type || '').trim().toUpperCase();
+  if (up === 'VIP') return 'vip';
+  if (up === 'COUPLE') return 'couple';
+  return 'standard';
+}
+
+/**
+ * Import ghế từ Excel — POST /seats/import-excel, field multipart: file
+ * Backend: sheet 1 cột room_id, row_label, number, type (optional)
+ */
+export const importSeatsFromExcel = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return axiosClient.post(`${SEATS_BASE}/import-excel`, formData, {
+    transformRequest: [
+      (data, headers) => {
+        delete headers['Content-Type'];
+        return data;
+      },
+    ],
+  });
+};
+
 /**
  * Lấy danh sách ghế (theo phòng, phân trang, tìm kiếm)
- * @param {{ room_id?: number, page?: number, limit?: number, search?: string }} params
+ * @param {{ room_id?: number, page?: number, limit?: number, search?: string, type?: string }} params
  */
 export const getSeats = (params = {}) => {
-  return axiosClient.get(SEATS_BASE, { params });
+  const p = { ...params };
+  if (p.type != null && p.type !== '') p.type = toApiSeatType(p.type);
+  return axiosClient.get(SEATS_BASE, { params: p });
 };
 
 /**
@@ -26,10 +68,11 @@ export const getSeatById = (id) => {
 
 /**
  * Tạo ghế mới
- * @param {{ room_id: number, row_label: string, number: number, type: 'standard'|'vip'|'couple', is_active?: boolean }} payload
+ * @param {{ room_id: number, row_label: string, number: number, type?: 'standard'|'vip'|'couple', is_active?: boolean }} payload
  */
 export const createSeat = (payload) => {
-  return axiosClient.post(SEATS_BASE, payload);
+  const body = { ...payload, type: toApiSeatType(payload?.type) };
+  return axiosClient.post(SEATS_BASE, body);
 };
 
 /**
@@ -38,7 +81,11 @@ export const createSeat = (payload) => {
  * @param {Object} payload
  */
 export const updateSeat = (id, payload) => {
-  return axiosClient.patch(`${SEATS_BASE}/${id}`, payload);
+  const body = { ...payload };
+  if (Object.prototype.hasOwnProperty.call(body, 'type')) {
+    body.type = toApiSeatType(body.type);
+  }
+  return axiosClient.patch(`${SEATS_BASE}/${id}`, body);
 };
 
 /**

@@ -3,6 +3,7 @@ import { Modal, Input, Button, Select } from '../../ui';
 import { createCinema, updateCinema, deleteCinema } from '../../../api/cinemaApi';
 import { handleApiError } from '../../../utils/errorHandling';
 import { getCities } from '../../../api/cityApi';
+import { withoutSoftDeleted } from '../../../utils/withoutSoftDeleted';
 
 const CinemaModals = ({ state, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -21,11 +22,11 @@ const CinemaModals = ({ state, onClose, onSuccess }) => {
 
   useEffect(() => {
     // Load danh sách tỉnh/thành phố cho select
-    getCities()
+    getCities({ pageNo: 1, pageSize: 500 })
       .then((res) => {
         const raw = res?.data ?? res;
         const list = Array.isArray(raw?.items) ? raw.items : Array.isArray(raw) ? raw : [];
-        setProvinces(list);
+        setProvinces(withoutSoftDeleted(list));
       })
       .catch(() => setProvinces([]));
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Input, Button, Select, Textarea } from '../../ui';
 import { ImagePlus, X, Film } from 'lucide-react';
 import { getGenres, createMovie, updateMovie, deleteMovie } from '../../../api/movieApi';
+import { withoutSoftDeleted } from '../../../utils/withoutSoftDeleted';
 import { handleApiError } from '../../../utils/errorHandling';
 
 const STATUS_OPTIONS = [
@@ -34,8 +35,9 @@ const MovieModals = ({ state, onClose, onSuccess }) => {
     if (isAddOrEdit) {
       getGenres()
         .then((res) => {
-          if (res?.success && Array.isArray(res.data)) setGenres(res.data);
-          else if (Array.isArray(res?.data)) setGenres(res.data);
+          const d = res?.data;
+          const list = Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : [];
+          setGenres(withoutSoftDeleted(list));
         })
         .catch(() => setGenres([]));
     }

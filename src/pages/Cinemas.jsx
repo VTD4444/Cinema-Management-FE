@@ -11,6 +11,7 @@ import {
 } from '../components/ui';
 import CinemaModals from '../components/features/cinemas/CinemaModals';
 import { getCinemas } from '../api/cinemaApi';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 const PAGE_SIZE = 5;
 
@@ -30,22 +31,24 @@ const Cinemas = () => {
       .then((res) => {
         const raw = res?.data ?? res;
         if (Array.isArray(raw)) {
+          const active = withoutSoftDeleted(raw);
           const term = (search || '').trim().toLowerCase();
           const filtered = term
-            ? raw.filter(
+            ? active.filter(
                 (c) =>
                   (c.name || '').toLowerCase().includes(term) ||
                   (c.address || '').toLowerCase().includes(term) ||
                   (c.city_name || '').toLowerCase().includes(term)
               )
-            : raw;
+            : active;
           setTotal(filtered.length);
           const start = (page - 1) * PAGE_SIZE;
           setCinemas(filtered.slice(start, start + PAGE_SIZE));
         } else if (raw && typeof raw === 'object') {
           if (Array.isArray(raw.items)) {
-            setCinemas(raw.items);
-            setTotal(typeof raw.total === 'number' ? raw.total : raw.items.length);
+            const items = withoutSoftDeleted(raw.items);
+            setCinemas(items);
+            setTotal(typeof raw.totalItems === 'number' ? raw.totalItems : typeof raw.total === 'number' ? raw.total : items.length);
           } else {
             setCinemas([]);
             setTotal(0);

@@ -3,6 +3,7 @@ import { Search, Plus, Filter, Edit, Trash2, Shield, User } from 'lucide-react';
 import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import UserModals from '../components/features/user/UserModals';
 import { getAllUsers } from '../api/userApi';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 const Users = () => {
     const [modalState, setModalState] = useState({ type: null, data: null });
@@ -17,7 +18,7 @@ const Users = () => {
         try {
             const response = await getAllUsers({ pageNo, pageSize: 10 });
             if (response?.success) {
-                setUsers(response.data.items || []);
+                setUsers(withoutSoftDeleted(response.data.items || []));
                 setTotalPages(response.data.totalPages || 1);
                 setTotalItems(response.data.totalItems || 0);
             }

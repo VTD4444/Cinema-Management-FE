@@ -8,6 +8,7 @@ import {
   Armchair,
   Crown,
   Heart,
+  Upload,
 } from 'lucide-react';
 import {
   Button,
@@ -20,8 +21,9 @@ import {
   Badge,
 } from '../components/ui';
 import SeatModals from '../components/features/seats/SeatModals';
-import { getSeats } from '../api/seatApi';
-import { getRooms } from '../api/roomApi';
+import { getSeats, normalizeSeatTypeForUi } from '../api/seatApi';
+import { getRooms, getRoomListFromResponse } from '../api/roomApi';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 const PAGE_SIZE = 10;
 
@@ -31,8 +33,10 @@ const TYPE_ICONS = { standard: Armchair, vip: Crown, couple: Heart };
 
 const formatSeatCode = (row_label, number) =>
   `${(row_label || '').toUpperCase()}${String(number ?? 0).padStart(2, '0')}`;
-const formatSeatName = (type, row_label, number) =>
-  `Ghế ${TYPE_LABELS[type] || type} ${(row_label || '').toUpperCase()}${String(number ?? 0).padStart(2, '0')}`;
+const formatSeatName = (type, row_label, number) => {
+  const t = normalizeSeatTypeForUi(type);
+  return `Ghế ${TYPE_LABELS[t] || type} ${(row_label || '').toUpperCase()}${String(number ?? 0).padStart(2, '0')}`;
+};
 
 const Seats = () => {
   const [seats, setSeats] = useState([]);
@@ -45,10 +49,9 @@ const Seats = () => {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   const fetchRooms = useCallback(() => {
-    getRooms()
+    getRooms({ pageNo: 1, pageSize: 500 })
       .then((res) => {
-        const raw = res?.data ?? res;
-        setRooms(Array.isArray(raw) ? raw : []);
+        setRooms(getRoomListFromResponse(res));
       })
       .catch(() => setRooms([]));
   }, []);
@@ -58,7 +61,9 @@ const Seats = () => {
     getSeats({ search: search.trim() || undefined })
       .then((res) => {
         const raw = res?.data ?? res;
-        const list = Array.isArray(raw) ? raw : [];
+        const list = withoutSoftDeleted(
+          Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [],
+        );
         const term = (search || '').trim().toLowerCase();
         const filtered = term
           ? list.filter(
@@ -73,9 +78,9 @@ const Seats = () => {
         setSeats(filtered.slice(start, start + PAGE_SIZE));
         setStatsData({
           total: list.length,
-          standard: list.filter((s) => s.type === 'standard').length,
-          vip: list.filter((s) => s.type === 'vip').length,
-          couple: list.filter((s) => s.type === 'couple').length,
+          standard: list.filter((s) => normalizeSeatTypeForUi(s.type) === 'standard').length,
+          vip: list.filter((s) => normalizeSeatTypeForUi(s.type) === 'vip').length,
+          couple: list.filter((s) => normalizeSeatTypeForUi(s.type) === 'couple').length,
         });
       })
       .catch(() => {
@@ -176,13 +181,23 @@ const Seats = () => {
               Bộ lọc nâng cao
             </Button>
           </div>
-          <Button
-            onClick={() => setModalState({ type: 'add', data: null })}
-            className="gap-2 rounded-full px-5 shrink-0"
-          >
-            <Plus className="h-4 w-4" />
-            Thêm ghế mới
-          </Button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Button
+              variant="secondary"
+              onClick={() => setModalState({ type: 'import', data: null })}
+              className="gap-2 rounded-full px-5"
+            >
+              <Upload className="h-4 w-4" />
+              Import Excel
+            </Button>
+            <Button
+              onClick={() => setModalState({ type: 'add', data: null })}
+              className="gap-2 rounded-full px-5"
+            >
+              <Plus className="h-4 w-4" />
+              Thêm ghế
+            </Button>
+          </div>
         </div>
 
         <div className="p-0 bg-transparent border-t border-border/50">
@@ -219,7 +234,8 @@ const Seats = () => {
                 seats.map((seat) => {
                   const code = formatSeatCode(seat.row_label, seat.number);
                   const name = formatSeatName(seat.type, seat.row_label, seat.number);
-                  const variant = TYPE_VARIANTS[seat.type] || 'default';
+                  const typeUi = normalizeSeatTypeForUi(seat.type);
+                  const variant = TYPE_VARIANTS[typeUi] || 'default';
                   const isActive = seat.is_active !== false;
                   return (
                     <TableRow key={seat.id} className="border-b border-border/20 hover:bg-white/5 transition-colors group">
@@ -234,8 +250,8 @@ const Seats = () => {
                       <TableCell className="py-4 font-mono text-zinc-300">{code}</TableCell>
                       <TableCell className="py-4 text-gray-200">{name}</TableCell>
                       <TableCell className="py-4">
-                        <Badge variant={seat.type === 'couple' ? 'default' : variant} className={seat.type === 'couple' ? 'bg-pink-500/10 text-pink-400' : ''}>
-                          {TYPE_LABELS[seat.type] || seat.type}
+                        <Badge variant={typeUi === 'couple' ? 'default' : variant} className={typeUi === 'couple' ? 'bg-pink-500/10 text-pink-400' : ''}>
+                          {TYPE_LABELS[typeUi] || seat.type}
                         </Badge>
                       </TableCell>
                       <TableCell className="py-4 text-zinc-400">{seat.row_label || '—'}</TableCell>

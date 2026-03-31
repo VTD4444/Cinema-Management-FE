@@ -21,6 +21,7 @@ import {
 } from '../components/ui';
 import MovieModals from '../components/features/movies/MovieModals';
 import { getMovies } from '../api/movieApi';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 const STATUS_FILTER_OPTIONS = [
   { value: '', label: 'Tất cả trạng thái' },
@@ -83,15 +84,14 @@ const Movies = () => {
         // Hỗ trợ cả format { data: { items, total } } và response mảng trực tiếp (JSON Server)
         const raw = res?.data ?? res;
         if (Array.isArray(raw)) {
-          setMovies(raw);
-          setTotal(raw.length);
+          const list = withoutSoftDeleted(raw);
+          setMovies(list);
+          setTotal(list.length);
         } else if (raw && typeof raw === 'object') {
           if (Array.isArray(raw.items)) {
-            setMovies(raw.items);
-            setTotal(typeof raw.total === 'number' ? raw.total : raw.items.length);
-          } else if (Array.isArray(raw)) {
-            setMovies(raw);
-            setTotal(raw.length);
+            const list = withoutSoftDeleted(raw.items);
+            setMovies(list);
+            setTotal(typeof raw.totalItems === 'number' ? raw.totalItems : typeof raw.total === 'number' ? raw.total : list.length);
           } else {
             setMovies([]);
             setTotal(0);

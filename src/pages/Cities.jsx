@@ -11,6 +11,7 @@ import {
 } from '../components/ui';
 import CityModals from '../components/features/cities/CityModals';
 import { getCities } from '../api/cityApi';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 const PAGE_SIZE = 5;
 
@@ -28,21 +29,23 @@ const Cities = () => {
       .then((res) => {
         const raw = res?.data ?? res;
         if (Array.isArray(raw)) {
+          const active = withoutSoftDeleted(raw);
           const term = (search || '').trim().toLowerCase();
           const filtered = term
-            ? raw.filter(
+            ? active.filter(
                 (c) =>
                   (c.name || '').toLowerCase().includes(term) ||
                   (c.code || '').toLowerCase().includes(term)
               )
-            : raw;
+            : active;
           setTotal(filtered.length);
           const start = (page - 1) * PAGE_SIZE;
           setCities(filtered.slice(start, start + PAGE_SIZE));
         } else if (raw && typeof raw === 'object') {
           if (Array.isArray(raw.items)) {
-            setCities(raw.items);
-            setTotal(typeof raw.total === 'number' ? raw.total : raw.items.length);
+            const items = withoutSoftDeleted(raw.items);
+            setCities(items);
+            setTotal(typeof raw.totalItems === 'number' ? raw.totalItems : typeof raw.total === 'number' ? raw.total : items.length);
           } else {
             setCities([]);
             setTotal(0);

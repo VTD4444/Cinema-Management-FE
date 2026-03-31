@@ -4,7 +4,8 @@ import { Button, Badge } from '../components/ui';
 import RoomModals from '../components/features/rooms/RoomModals';
 import { getCities } from '../api/cityApi';
 import { getCinemas } from '../api/cinemaApi';
-import { getRooms } from '../api/roomApi';
+import { getRooms, getRoomListFromResponse } from '../api/roomApi';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 const ROOM_TYPE_LABELS = { standard: 'Standard', gold_class: 'Gold Class', couple: 'Couple' };
 const FORMAT_LABELS = { imax: 'IMAX', '2d': '2D', '3d': '3D' };
@@ -13,6 +14,17 @@ const STATUS_LABELS = {
   maintenance: { text: 'BẢO TRÌ', variant: 'warning' },
   pending: { text: 'CHỜ DUYỆT', variant: 'warning' },
 };
+
+/** Backend GET /provinces/admin và /cinemas/admin trả { data: { items, pageNo, ... } } */
+const extractListFromAdminResponse = (res) => {
+  const d = res?.data;
+  if (Array.isArray(d?.items)) return d.items;
+  if (Array.isArray(d)) return d;
+  if (Array.isArray(res)) return res;
+  return [];
+};
+
+const cinemaProvinceId = (c) => c?.province_id ?? c?.city_id;
 
 const Rooms = () => {
   const [cities, setCities] = useState([]);
@@ -25,7 +37,7 @@ const Rooms = () => {
   const [modalState, setModalState] = useState({ type: null, data: null });
 
   const loadCities = useCallback(() => {
-    getCities()
+    getCities({ pageNo: 1, pageSize: 500 })
       .then((res) => {
         const items = res?.data?.items || res?.data || [];
         setCities(Array.isArray(items) ? items : []);
@@ -34,7 +46,7 @@ const Rooms = () => {
   }, []);
 
   const loadCinemas = useCallback(() => {
-    getCinemas()
+    getCinemas({ pageNo: 1, pageSize: 500 })
       .then((res) => {
         const items = res?.data?.items || res?.data || [];
         setCinemas(Array.isArray(items) ? items : []);
@@ -86,7 +98,7 @@ const Rooms = () => {
       return;
     }
     setLoadingRooms(true);
-    getRooms({ cinema_id: cinemaId })
+    getRooms({ cinema_id: cinemaId, pageNo: 1, pageSize: 500 })
       .then((res) => {
         const items = res?.data?.items || res?.data || [];
         if (Array.isArray(items)) {
@@ -168,7 +180,7 @@ const Rooms = () => {
               className="gap-2 rounded-full px-4 h-9 text-sm"
             >
               <Plus className="h-4 w-4" />
-              Thêm phòng
+              Thêm phòng & ghế
             </Button>
           </div>
 
@@ -177,7 +189,7 @@ const Rooms = () => {
           ) : loadingRooms ? (
             <p className="py-8 text-center text-zinc-500">Đang tải...</p>
           ) : rooms.length === 0 ? (
-            <p className="py-8 text-center text-zinc-500 text-sm">Chưa có phòng nào. Nhấn &quot;Thêm phòng&quot; để thêm.</p>
+            <p className="py-8 text-center text-zinc-500 text-sm">Chưa có phòng nào. Nhấn &quot;Thêm phòng &amp; ghế&quot; để thêm.</p>
           ) : (
             <ul className="space-y-3">
               {rooms.map((room) => {

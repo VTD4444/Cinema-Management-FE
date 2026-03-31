@@ -11,6 +11,7 @@ import {
 } from '../components/ui';
 import GenreModals from '../components/features/genres/GenreModals';
 import { getGenres } from '../api/genreApi';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 const PAGE_SIZE = 5;
 
@@ -34,15 +35,17 @@ const Genres = () => {
       .then((res) => {
         const raw = res?.data ?? res;
         if (Array.isArray(raw)) {
+          const active = withoutSoftDeleted(raw);
           const term = (search || '').trim().toLowerCase();
-          const filtered = term ? raw.filter((g) => (g.name || '').toLowerCase().includes(term)) : raw;
+          const filtered = term ? active.filter((g) => (g.name || '').toLowerCase().includes(term)) : active;
           setTotal(filtered.length);
           const start = (page - 1) * PAGE_SIZE;
           setGenres(filtered.slice(start, start + PAGE_SIZE));
         } else if (raw && typeof raw === 'object') {
           if (Array.isArray(raw.items)) {
-            setGenres(raw.items);
-            setTotal(typeof raw.total === 'number' ? raw.total : raw.items.length);
+            const items = withoutSoftDeleted(raw.items);
+            setGenres(items);
+            setTotal(typeof raw.totalItems === 'number' ? raw.totalItems : typeof raw.total === 'number' ? raw.total : items.length);
           } else {
             setGenres([]);
             setTotal(0);
