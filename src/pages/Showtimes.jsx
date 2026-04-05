@@ -346,8 +346,8 @@ const Showtimes = () => {
                         <p className="text-sm font-semibold text-white">{room.name}</p>
                         {room.room_type && (
                           <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-fit ${room.room_type === 'IMAX' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                              room.room_type === 'Gold Class' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
-                                'bg-zinc-700/30 text-zinc-400 border border-zinc-600/20'
+                            room.room_type === 'Gold Class' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                              'bg-zinc-700/30 text-zinc-400 border border-zinc-600/20'
                             }`}>
                             {room.room_type}
                           </span>

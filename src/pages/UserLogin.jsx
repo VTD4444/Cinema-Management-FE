@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input, Button } from '../components/ui';
-import { login } from '../api/authApi';
+import { login as loginApi } from '../api/authApi';
+import useAuthStore from '../store/useAuthStore';
 
 const UserLogin = () => {
   const navigate = useNavigate();
+  const authLogin = useAuthStore((state) => state.login);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,10 +22,13 @@ const UserLogin = () => {
     setError('');
 
     try {
-      const res = await login(formData);
+      const res = await loginApi(formData);
       const token = res?.data?.accessToken;
+      const user = res?.data?.user;
+      
       if (token) {
-        localStorage.setItem('userAccessToken', token);
+        localStorage.setItem('accessToken', token);
+        authLogin(user, token); // Update global state
         navigate('/home');
       } else {
         setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');

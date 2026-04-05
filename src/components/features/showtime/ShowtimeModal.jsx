@@ -49,7 +49,11 @@ const ShowtimeModal = ({ state, onClose, onSuccess }) => {
       getMoviesPublic({ pageSize: 100 })
         .then((res) => {
           const items = res?.data?.items || res?.data || [];
-          setMovies(Array.isArray(items) ? items : []);
+          const validStatuses = ['SHOWING', 'COMING_SOON'];
+          const filteredItems = Array.isArray(items) 
+             ? items.filter(m => validStatuses.includes(m.status)) 
+             : [];
+          setMovies(filteredItems);
         })
         .catch(() => setMovies([]));
     }

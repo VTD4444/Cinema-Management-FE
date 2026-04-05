@@ -4,6 +4,8 @@ import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 import { Button } from '../components/ui';
 import UserLayout from '../components/layout/UserLayout';
 
+import { useNavigate } from 'react-router-dom';
+
 const SectionTitle = ({ title, actionLabel }) => (
   <div className="flex items-center justify-between mb-4">
     <h2 className="text-lg font-semibold text-white">{title}</h2>
@@ -14,9 +16,13 @@ const SectionTitle = ({ title, actionLabel }) => (
 );
 
 const MovieCard = ({ movie }) => {
+  const navigate = useNavigate();
   const poster = Array.isArray(movie.poster_urls) ? movie.poster_urls[0] : null;
   return (
-    <div className="w-40 shrink-0">
+    <div 
+      className="w-40 shrink-0 cursor-pointer group"
+      onClick={() => navigate(`/movie/${movie.id}`)}
+    >
       <div className="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 mb-2">
         {poster ? (
           // eslint-disable-next-line jsx-a11y/img-redundant-alt
@@ -38,6 +44,7 @@ const MovieCard = ({ movie }) => {
 };
 
 const UserHome = () => {
+  const navigate = useNavigate();
   const [nowShowing, setNowShowing] = useState([]);
   const [comingSoon, setComingSoon] = useState([]);
   const [latestTrailers, setLatestTrailers] = useState([]);
@@ -118,6 +125,7 @@ const UserHome = () => {
                 <Button
                   variant="ghost"
                   className="border border-zinc-600 bg-zinc-900/40 hover:bg-zinc-800 h-10 px-4 rounded-full text-sm"
+                  onClick={() => heroMovie && navigate(`/movie/${heroMovie.id}`)}
                 >
                   Xem chi tiết
                 </Button>

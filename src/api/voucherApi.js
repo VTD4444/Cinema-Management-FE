@@ -9,6 +9,13 @@ export const getVouchersAdmin = (params = {}) => {
 };
 
 /**
+ * Lấy danh sách voucher cho user hiện tại
+ */
+export const getMyVouchers = () => {
+  return axiosClient.get('/vouchers/my-vouchers');
+};
+
+/**
  * Lấy chi tiết một voucher
  * @param {number|string} id
  */

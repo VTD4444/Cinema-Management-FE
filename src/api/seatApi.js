@@ -88,10 +88,14 @@ export const updateSeat = (id, payload) => {
   return axiosClient.patch(`${SEATS_BASE}/${id}`, body);
 };
 
-/**
- * Xóa ghế
- * @param {number|string} id
- */
 export const deleteSeat = (id) => {
   return axiosClient.delete(`${SEATS_BASE}/${id}`);
+};
+
+/**
+ * Lấy danh sách map ghế của một showtime
+ * @param {number|string} showtimeId
+ */
+export const getSeatMapByShowtime = (showtimeId) => {
+  return axiosClient.get(`${SEATS_BASE}/showtime/${showtimeId}/map`);
 };

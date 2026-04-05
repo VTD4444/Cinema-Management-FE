@@ -4,11 +4,31 @@ import { Search } from 'lucide-react';
 import UserLayout from '../components/layout/UserLayout';
 import { getMoviesPublic, getGenres } from '../api/movieApi';
 
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 const MovieCard = ({ movie }) => {
+  const navigate = useNavigate();
   const poster = Array.isArray(movie.poster_urls) ? movie.poster_urls[0] : null;
 
   return (
-    <div className="flex flex-col gap-3 group cursor-pointer">
+    <div 
+      className="flex flex-col gap-3 group cursor-pointer"
+      onClick={() => navigate(`/movie/${movie.id}`)}
+    >
       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800">
         {poster ? (
           <img
@@ -38,7 +58,13 @@ const MovieCard = ({ movie }) => {
             {movie.duration ? `${Math.floor(movie.duration / 60)}h ${movie.duration % 60}m` : 'TBA'}
           </span>
         </div>
-        <button className="mt-2 w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-2 rounded-lg text-sm transition-colors">
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/movie/${movie.id}`);
+          }}
+          className="mt-2 w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-2 rounded-lg text-sm transition-colors"
+        >
           Đặt vé
         </button>
       </div>
@@ -52,10 +78,12 @@ const UserSearch = () => {
   const initialQuery = searchParams.get('q') || '';
 
   const [searchInput, setSearchInput] = useState(initialQuery);
+  const debouncedSearch = useDebounce(searchInput, 500);
+  
   const [movies, setMovies] = useState([]);
   const [genres, setGenres] = useState([]);
-  const [selectedGenres, setSelectedGenres] = useState([]);
-  const [sortBy, setSortBy] = useState('popular');
+  const [selectedGenre, setSelectedGenre] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Pagination (mocking support)
@@ -67,7 +95,7 @@ const UserSearch = () => {
     // Load genres once
     getGenres()
       .then(res => {
-        const raw = res?.data ?? res;
+        const raw = res?.data?.items || res?.data || res;
         setGenres(Array.isArray(raw) ? raw : []);
       })
       .catch(() => setGenres([]));
@@ -76,26 +104,43 @@ const UserSearch = () => {
   const fetchMovies = async () => {
     setLoading(true);
     try {
-      const res = await getMoviesPublic({ search: initialQuery, pageNo: page, pageSize: 12 });
+      const params = {
+        pageNo: page,
+        pageSize: 12,
+      };
+      
+      if (initialQuery) params.title = initialQuery;
+      if (selectedGenre) params.genreId = selectedGenre;
+      if (statusFilter) params.status = statusFilter;
+
+      const res = await getMoviesPublic(params);
       const items = res?.data?.items || res?.data || [];
-      const total = res?.data?.total || items.length;
+      let total = res?.data?.totalItems || res?.data?.total || items.length;
       
       let filtered = [...items];
-      
-      // Local genre filtering if API doesn't support it directly
-      if (selectedGenres.length > 0) {
+
+      // Fallback local filtering in case backend doesn't filter correctly
+      if (initialQuery) {
         filtered = filtered.filter(m => 
-          m.genre_ids && m.genre_ids.some(id => selectedGenres.includes(id))
+          m.title.toLowerCase().includes(initialQuery.toLowerCase())
         );
       }
-
-      // Local sorting
-      if (sortBy === 'a-z') {
-        filtered.sort((a, b) => a.title.localeCompare(b.title));
-      } else if (sortBy === 'newest') {
-        filtered.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+      if (selectedGenre) {
+        filtered = filtered.filter(m => 
+          (m.genre_ids && m.genre_ids.some(id => id == selectedGenre)) ||
+          (m.genres && m.genres.some(g => g.id == selectedGenre)) ||
+          (m.genreIds && m.genreIds.some(id => id == selectedGenre))
+        );
+      }
+      if (statusFilter) {
+        filtered = filtered.filter(m => m.status === statusFilter);
       }
 
+      // If local filtering changed the amount, adjust total (approximate)
+      if (filtered.length !== items.length) {
+        total = filtered.length;
+      }
+      
       setMovies(filtered);
       setTotalItems(total);
       setTotalPages(Math.ceil(total / 12) || 1);
@@ -109,22 +154,21 @@ const UserSearch = () => {
 
   useEffect(() => {
     fetchMovies();
-  }, [initialQuery, page, selectedGenres, sortBy]);
+  }, [initialQuery, page, selectedGenre, statusFilter]);
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchInput.trim()) {
-      setSearchParams({ q: searchInput.trim() });
-    } else {
-      setSearchParams({});
+  useEffect(() => {
+    if (debouncedSearch !== initialQuery) {
+      if (debouncedSearch.trim()) {
+        setSearchParams({ q: debouncedSearch.trim() });
+      } else {
+        setSearchParams({});
+      }
+      setPage(1);
     }
-    setPage(1);
-  };
+  }, [debouncedSearch, initialQuery, setSearchParams]);
 
   const handleGenreToggle = (genreId) => {
-    setSelectedGenres(prev => 
-      prev.includes(genreId) ? prev.filter(id => id !== genreId) : [...prev, genreId]
-    );
+    setSelectedGenre(prev => prev === genreId ? '' : genreId);
     setPage(1);
   };
 
@@ -139,10 +183,7 @@ const UserSearch = () => {
             Khám phá bộ sưu tập phim đa dạng, tìm rạp chiếu gần bạn và đặt vé ngay hôm nay.
           </p>
           
-          <form 
-            onSubmit={handleSearchSubmit} 
-            className="w-full max-w-2xl relative flex items-center"
-          >
+          <div className="w-full max-w-2xl relative flex items-center">
             <div className="absolute left-4 text-zinc-400">
               <Search className="h-5 w-5" />
             </div>
@@ -151,15 +192,9 @@ const UserSearch = () => {
               placeholder="Nhập tên phim..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full bg-[#1c1c1c] border border-zinc-700/50 rounded-full py-4 pl-12 pr-32 text-white placeholder:text-zinc-500 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all text-sm shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
+              className="w-full bg-[#1c1c1c] border border-zinc-700/50 rounded-full py-4 pl-12 pr-6 text-white placeholder:text-zinc-500 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all text-sm shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
             />
-            <button 
-              type="submit"
-              className="absolute right-2 bg-red-600 hover:bg-red-500 text-white font-semibold py-2.5 px-6 rounded-full text-sm transition-colors shadow-lg shadow-red-600/20"
-            >
-              Tìm kiếm
-            </button>
-          </form>
+          </div>
         </div>
 
         {/* Two Sidebar Layout */}
@@ -172,7 +207,7 @@ const UserSearch = () => {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-base tracking-wide text-zinc-100">Thể loại</h3>
                 <button 
-                  onClick={() => setSelectedGenres([])}
+                  onClick={() => setSelectedGenre('')}
                   className="text-[10px] uppercase font-bold text-red-500 hover:text-red-400"
                 >
                   Reset
@@ -180,46 +215,44 @@ const UserSearch = () => {
               </div>
               <div className="space-y-3">
                 {genres.map(genre => (
-                  <label key={genre.id} className="flex items-center justify-between cursor-pointer group">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedGenres.includes(genre.id) ? 'bg-red-600 border-red-600' : 'border-zinc-600 bg-transparent group-hover:border-zinc-400'}`}>
-                        {selectedGenres.includes(genre.id) && (
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                        )}
-                      </div>
-                      <span className={`text-sm ${selectedGenres.includes(genre.id) ? 'text-white font-medium' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
-                        {genre.name}
-                      </span>
+                  <label key={genre.id} className="flex items-center gap-3 cursor-pointer group hover:text-white" onClick={() => handleGenreToggle(genre.id)}>
+                    <div className="relative flex items-center justify-center">
+                      <div className={`w-4 h-4 rounded-full border transition-colors ${selectedGenre === genre.id ? 'border-red-600' : 'border-zinc-600 group-hover:border-zinc-400'}`}></div>
+                      {selectedGenre === genre.id && (
+                        <div className="absolute w-2 h-2 rounded-full bg-red-600"></div>
+                      )}
                     </div>
+                    <span className={`text-sm ${selectedGenre === genre.id ? 'text-white font-medium' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
+                      {genre.name}
+                    </span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Sắp xếp theo */}
+            {/* Trạng thái */}
             <div>
-              <h3 className="font-bold text-base tracking-wide text-zinc-100 mb-4">Sắp xếp theo</h3>
+              <h3 className="font-bold text-base tracking-wide text-zinc-100 mb-4">Trạng thái</h3>
               <div className="space-y-3">
                 {[
-                  { id: 'a-z', label: 'Tên phim (A-Z)' },
-                  { id: 'newest', label: 'Mới nhất' },
-                  { id: 'popular', label: 'Phổ biến nhất' },
-                  { id: 'rating', label: 'Đánh giá cao' },
-                ].map((sortOption) => (
-                  <label key={sortOption.id} className="flex items-center gap-3 cursor-pointer group">
+                  { id: '', label: 'Tất cả' },
+                  { id: 'SHOWING', label: 'Đang chiếu' },
+                  { id: 'COMING_SOON', label: 'Sắp chiếu' },
+                ].map((statusOption) => (
+                  <label key={statusOption.id} className="flex items-center gap-3 cursor-pointer group">
                     <div className="relative flex items-center justify-center">
                       <input 
                         type="radio" 
-                        name="sort" 
+                        name="status" 
                         className="peer sr-only" 
-                        checked={sortBy === sortOption.id}
-                        onChange={() => setSortBy(sortOption.id)}
+                        checked={statusFilter === statusOption.id}
+                        onChange={() => { setStatusFilter(statusOption.id); setPage(1); }}
                       />
                       <div className="w-4 h-4 rounded-full border border-zinc-600 peer-checked:border-red-600 transition-colors group-hover:border-zinc-400"></div>
                       <div className="absolute w-2 h-2 rounded-full bg-red-600 opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                     </div>
-                    <span className={`text-sm ${sortBy === sortOption.id ? 'text-white font-medium' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
-                      {sortOption.label}
+                    <span className={`text-sm ${statusFilter === statusOption.id ? 'text-white font-medium' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
+                      {statusOption.label}
                     </span>
                   </label>
                 ))}
