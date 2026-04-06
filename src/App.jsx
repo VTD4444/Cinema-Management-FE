@@ -22,6 +22,8 @@ import UserLogin from './pages/UserLogin';
 import UserRegister from './pages/UserRegister';
 import UserForgotPassword from './pages/UserForgotPassword';
 import UserHome from './pages/UserHome';
+import UserMovies from './pages/UserMovies';
+import UserMovieDetail from './pages/UserMovieDetail';
 import UserSearch from './pages/UserSearch';
 import Profile from './pages/Profile';
 import MyVouchers from './pages/MyVouchers';
@@ -75,6 +77,8 @@ function App() {
       {/* User-facing routes */}
       <Route path="/" element={<UserRootRedirect />} />
       <Route path="/home" element={<UserHome />} />
+      <Route path="/movies" element={<UserMovies />} />
+      <Route path="/movies/:id" element={<UserMovieDetail />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/search" element={<UserSearch />} />
       <Route path="/profile" element={<Profile />} />

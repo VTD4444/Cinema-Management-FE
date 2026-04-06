@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Search, User, UserCircle, Ticket, CalendarDays } from 'lucide-react';
+import UserFooter from './UserFooter';
 
 const UserHeader = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -18,25 +19,10 @@ const UserHeader = () => {
   }, []);
 
   return (
-    <header className="flex items-center justify-between px-10 py-4 text-sm text-zinc-100 relative z-50">
+    <header className="sticky top-0 z-50 flex items-center justify-between px-10 py-4 text-sm text-zinc-100 border-b border-zinc-800/70 bg-[#0e0e0e]/90 backdrop-blur-md">
       <Link to="/home" className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-6 w-6 text-white"
-          >
-            <rect width="18" height="18" x="3" y="3" rx="2" />
-            <path d="M7 3v18" />
-            <path d="M17 3v18" />
-            <path d="M3 9h18" />
-            <path d="M3 15h18" />
-          </svg>
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <img src="/logo.png" alt="CineGo logo" className="h-7 w-7 object-contain" />
         </div>
         <div>
           <h1 className="text-lg font-bold text-white tracking-tight leading-none">CineGo</h1>
@@ -46,8 +32,8 @@ const UserHeader = () => {
         </div>
       </Link>
       <nav className="flex items-center gap-6 text-zinc-300">
-        <button className="hover:text-white">Phim</button>
-        <button className="hover:text-white">Rạp</button>
+        <Link to="/movies" className="hover:text-white">Phim</Link>
+        <Link to="/search" className="hover:text-white">Rạp</Link>
         <Link to="/about" className="hover:text-white">Về chúng tôi</Link>
       </nav>
       <div className="flex items-center gap-5">
@@ -94,21 +80,6 @@ const UserHeader = () => {
         </div>
       </div>
     </header>
-  );
-};
-
-const UserFooter = () => {
-  return (
-    <footer className="border-t border-zinc-800 py-6 px-10 text-xs text-zinc-500">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <span>© {new Date().getFullYear()} CinemaPlus. All rights reserved.</span>
-        <div className="flex gap-4">
-          <button className="hover:text-zinc-300">Privacy</button>
-          <button className="hover:text-zinc-300">Terms</button>
-          <button className="hover:text-zinc-300">Sitemap</button>
-        </div>
-      </div>
-    </footer>
   );
 };
 
