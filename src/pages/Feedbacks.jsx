@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Eye, Trash2, Reply, CheckCircle, X, Send, MessageSquare } from 'lucide-react';
 import { Input, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Modal, Textarea } from '../components/ui';
 import { getContacts, deleteContact, replyContact, resolveContact, getContactById } from '../api/contactApi';
@@ -35,7 +35,7 @@ const Feedbacks = () => {
     const [actionLoading, setActionLoading] = useState(false);
     const [actionError, setActionError] = useState('');
 
-    const fetchContacts = async () => {
+    const fetchContacts = useCallback(async () => {
         setLoading(true);
         try {
             const res = await getContacts({ pageNo, pageSize: 10 });
@@ -49,11 +49,11 @@ const Feedbacks = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [pageNo]);
 
     useEffect(() => {
         fetchContacts();
-    }, [pageNo]);
+    }, [fetchContacts]);
 
     // View detail
     const handleView = async (item) => {

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, ChevronLeft, ChevronRight, Calendar, Search } from 'lucide-react';
-import { Button, Select } from '../components/ui';
+import { Button } from '../components/ui';
 import ShowtimeModal from '../components/features/showtime/ShowtimeModal';
 import { getShowtimesByFilter } from '../api/showtimeApi';
-import { getMoviesPublic } from '../api/movieApi';
+import { getMovies } from '../api/movieApi';
 import { getCinemas } from '../api/cinemaApi';
 import { getCities } from '../api/cityApi';
 import { getRooms } from '../api/roomApi';
@@ -12,9 +12,9 @@ import { getRooms } from '../api/roomApi';
 const HOUR_START = 0;   // 0:00
 const HOUR_END = 24;    // 24:00
 const TOTAL_HOURS = HOUR_END - HOUR_START;
-const HOUR_WIDTH = 140; // px per hour
+const HOUR_WIDTH = 110; // px per hour (compact view)
 const TIMELINE_WIDTH = TOTAL_HOURS * HOUR_WIDTH;
-const ROOM_LABEL_WIDTH = 180;
+const ROOM_LABEL_WIDTH = 220;
 
 // Color palette for showtimes by movie
 const SHOWTIME_COLORS = [
@@ -52,6 +52,15 @@ const getPositionAndWidth = (startStr, durationMin) => {
   const left = (offsetMinutes / 60) * HOUR_WIDTH;
   const width = ((durationMin || 120) / 60) * HOUR_WIDTH;
   return { left: Math.max(0, left), width: Math.max(width, 60) };
+};
+
+const getMovieItemsFromResponse = (res) => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.items)) return res.items;
+  if (Array.isArray(res?.data?.items)) return res.data.items;
+  if (Array.isArray(res?.data?.data?.items)) return res.data.data.items;
+  if (Array.isArray(res?.data)) return res.data;
+  return [];
 };
 
 const Showtimes = () => {
@@ -100,9 +109,9 @@ const Showtimes = () => {
       })
       .catch(() => setCinemas([]));
 
-    getMoviesPublic({ pageSize: 200 })
+    getMovies({ pageNo: 1, pageSize: 200 })
       .then((res) => {
-        const items = res?.data?.items || res?.data || [];
+        const items = getMovieItemsFromResponse(res);
         setMovies(Array.isArray(items) ? items : []);
       })
       .catch(() => setMovies([]));
@@ -112,6 +121,25 @@ const Showtimes = () => {
   const cinemaOptions = selectedCityId
     ? cinemas.filter((c) => String(c.province_id || c.city_id) === String(selectedCityId))
     : cinemas;
+
+  // Auto select defaults so the page calls showtime API immediately
+  useEffect(() => {
+    if (!selectedCityId && cities.length > 0) {
+      setSelectedCityId(String(cities[0].id));
+    }
+  }, [cities, selectedCityId]);
+
+  useEffect(() => {
+    if (!selectedMovieId && movies.length > 0) {
+      setSelectedMovieId(String(movies[0].id));
+    }
+  }, [movies, selectedMovieId]);
+
+  useEffect(() => {
+    if (!selectedCinemaId && cinemaOptions.length > 0) {
+      setSelectedCinemaId(String(cinemaOptions[0].id));
+    }
+  }, [cinemaOptions, selectedCinemaId]);
 
   // Reset cinema when city changes
   useEffect(() => {
@@ -202,10 +230,10 @@ const Showtimes = () => {
       </div>
 
       {/* Filters */}
-      <div className="rounded-xl border border-border bg-surface/30 p-4 shadow-sm">
-        <div className="flex flex-col md:flex-row items-start md:items-end gap-4">
+      <div className="rounded-xl border border-border bg-surface/30 p-4 shadow-sm space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {/* City/Province filter */}
-          <div className="flex flex-col gap-1.5 min-w-[200px]">
+          <div className="flex flex-col gap-1.5">
             <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Khu vực</label>
             <select
               value={selectedCityId}
@@ -220,7 +248,7 @@ const Showtimes = () => {
           </div>
 
           {/* Cinema filter */}
-          <div className="flex flex-col gap-1.5 min-w-[200px]">
+          <div className="flex flex-col gap-1.5">
             <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Rạp chiếu</label>
             <select
               value={selectedCinemaId}
@@ -236,7 +264,7 @@ const Showtimes = () => {
           </div>
 
           {/* Movie filter */}
-          <div className="flex flex-col gap-1.5 min-w-[200px]">
+          <div className="flex flex-col gap-1.5">
             <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Phim</label>
             <select
               value={selectedMovieId}
@@ -277,10 +305,15 @@ const Showtimes = () => {
             </div>
           </div>
 
-          <div className="flex-1" />
-          <p className="text-sm text-zinc-400 flex items-center gap-2 pb-2">
+        </div>
+
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm text-zinc-400 flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             {displayDate}
+          </p>
+          <p className="text-xs text-zinc-500">
+            Kéo ngang để xem toàn bộ khung giờ 00:00-24:00.
           </p>
         </div>
       </div>
@@ -298,6 +331,50 @@ const Showtimes = () => {
             <p className="text-sm">Đang tải lịch chiếu...</p>
           </div>
         ) : (
+          <>
+          <div className="block md:hidden p-4 space-y-3">
+            {rooms.length === 0 ? (
+              <div className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-4 text-sm text-zinc-500">
+                Không có phòng chiếu nào cho rạp này.
+              </div>
+            ) : (
+              rooms.map((room) => {
+                const roomShowtimes = (showtimesByRoom[String(room.id)] || []).sort((a, b) =>
+                  String(a.start_time || '').localeCompare(String(b.start_time || ''))
+                );
+                return (
+                  <div key={`mobile-${room.id}`} className="rounded-lg border border-zinc-800 bg-zinc-950/70 p-3">
+                    <p className="text-sm font-semibold text-white">{room.name}</p>
+                    <p className="mt-1 text-[11px] text-zinc-500">{room.room_type || 'Phòng thường'}</p>
+                    {roomShowtimes.length === 0 ? (
+                      <p className="mt-3 text-xs text-zinc-600">Chưa có suất chiếu.</p>
+                    ) : (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {roomShowtimes.map((st) => {
+                          const movieId = st.movie?.id || st.movie_id;
+                          const duration = st.movie?.duration || movies.find((m) => String(m.id) === String(movieId))?.duration || 120;
+                          const startTime = formatTime(st.start_time);
+                          const endTime = formatTime(getEndTime(st.start_time, duration));
+                          return (
+                            <button
+                              key={`mobile-st-${st.id}`}
+                              type="button"
+                              onClick={() => setModalState({ type: 'edit', data: st, cinemaId: selectedCinemaId })}
+                              className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-zinc-200"
+                            >
+                              {startTime} - {endTime}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="hidden md:block">
           <div ref={timelineRef} className="overflow-x-auto">
             {/* Timeline header + body container */}
             <div style={{ minWidth: ROOM_LABEL_WIDTH + TIMELINE_WIDTH + 20 }}>
@@ -315,7 +392,7 @@ const Showtimes = () => {
                 {/* Hour labels */}
                 <div className="relative flex-1" style={{ width: TIMELINE_WIDTH }}>
                   <div className="flex">
-                    {hourLabels.map((label, i) => (
+                    {hourLabels.map((label) => (
                       <div
                         key={label}
                         className="text-[10px] font-medium text-zinc-500 py-3 border-l border-border/30 pl-2"
@@ -337,7 +414,7 @@ const Showtimes = () => {
                 rooms.map((room) => {
                   const roomShowtimes = showtimesByRoom[String(room.id)] || [];
                   return (
-                    <div key={room.id} className="flex border-b border-border/20 hover:bg-white/[0.02] transition-colors group/row min-h-[80px]">
+                    <div key={room.id} className="flex border-b border-border/20 hover:bg-white/[0.02] transition-colors group/row min-h-[92px]">
                       {/* Room label */}
                       <div
                         className="shrink-0 flex flex-col justify-center px-4 py-4 border-r border-border/40 bg-surface/30"
@@ -355,7 +432,7 @@ const Showtimes = () => {
                       </div>
 
                       {/* Timeline area */}
-                      <div className="relative flex-1" style={{ width: TIMELINE_WIDTH, minHeight: 80 }}>
+                      <div className="relative flex-1" style={{ width: TIMELINE_WIDTH, minHeight: 92 }}>
                         {/* Hour grid lines */}
                         {hourLabels.map((_, i) => (
                           <div
@@ -366,6 +443,12 @@ const Showtimes = () => {
                         ))}
 
                         {/* Showtime blocks */}
+                        {roomShowtimes.length === 0 && (
+                          <div className="absolute inset-0 flex items-center px-4 text-xs text-zinc-600">
+                            Chưa có suất chiếu trong phòng này.
+                          </div>
+                        )}
+
                         {roomShowtimes.map((st) => {
                           const movieId = st.movie.id || st.movie?.id;
                           const movieTitle = st.movie?.title || movies.find(m => m.id === movieId)?.title || `Phim #${movieId}`;
@@ -379,7 +462,7 @@ const Showtimes = () => {
                           return (
                             <div
                               key={st.id}
-                              className="absolute top-2 bottom-2 rounded-lg cursor-pointer hover:scale-[1.02] transition-transform duration-150 overflow-hidden group/block"
+                              className="absolute top-2 bottom-2 rounded-lg cursor-pointer hover:scale-[1.01] transition-transform duration-150 overflow-hidden group/block"
                               style={{
                                 left,
                                 width,
@@ -409,7 +492,7 @@ const Showtimes = () => {
 
                                 {/* Movie name */}
                                 <p
-                                  className="text-xs font-semibold truncate mt-0.5"
+                                  className="text-[11px] font-semibold truncate mt-0.5"
                                   style={{ color: color.text }}
                                 >
                                   {movieTitle}
@@ -448,6 +531,8 @@ const Showtimes = () => {
               )}
             </div>
           </div>
+          </div>
+          </>
         )}
 
         {/* Summary bar */}

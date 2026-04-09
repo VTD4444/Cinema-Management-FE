@@ -5,4 +5,5 @@ export * from './Table';
 export * from './Select';
 export * from './Badge';
 export * from './Textarea';
+export * from './ResponsivePageContainer';
 

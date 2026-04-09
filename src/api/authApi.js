@@ -46,3 +46,18 @@ export const resetPassword = (payload) => {
 export const getMyInfo = () => {
   return axiosClient.get('/auth/myInfo');
 };
+
+/**
+ * Đổi mật khẩu (đã đăng nhập)
+ * @param {{ currentPassword: string, newPassword: string, confirmPassword: string }} payload
+ */
+export const changePassword = (payload) => {
+  return axiosClient.put('/auth/change-password', payload);
+};
+
+/**
+ * Lấy thông tin profile (alias cho getMyInfo)
+ */
+export const getMyProfile = () => {
+  return axiosClient.get('/auth/myInfo');
+};

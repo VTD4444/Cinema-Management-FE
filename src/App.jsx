@@ -90,7 +90,7 @@ function App() {
       {/* User-facing routes */}
       <Route path="/" element={<UserRootRedirect />} />
       <Route path="/home" element={<UserHome />} />
-      {/* <Route path="/movie/:id" element={<MovieDetails />} /> */}
+      <Route path="/movie/:id" element={<MovieDetails />} />
       <Route path="/booking/:showtimeId" element={<SeatSelection />} />
       <Route path="/booking/:showtimeId/summary" element={<OrderSummary />} />
       <Route path="/payment-result" element={<PaymentResult />} />

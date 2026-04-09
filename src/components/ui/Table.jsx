@@ -1,8 +1,8 @@
 import React from 'react';
 import { cn } from '../../utils/mergeClass';
 
-export const Table = React.forwardRef(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto rounded-lg border border-border">
+export const Table = React.forwardRef(({ className, wrapperClassName, ...props }, ref) => (
+  <div className={cn('relative w-full overflow-auto rounded-lg border border-border', wrapperClassName)}>
     <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
   </div>
 ));
@@ -54,3 +54,7 @@ export const TableCell = React.forwardRef(({ className, ...props }, ref) => (
   />
 ));
 TableCell.displayName = 'TableCell';
+
+export const MobileTableCards = ({ className, children }) => (
+  <div className={cn('grid gap-3 md:hidden', className)}>{children}</div>
+);

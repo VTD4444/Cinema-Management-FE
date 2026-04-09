@@ -1,9 +1,9 @@
 import React from 'react';
-import { Bell, User } from 'lucide-react';
+import { Bell, Menu, User } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { NAVIGATION_ITEMS } from '../../config/navigation';
 
-export const Header = () => {
+export const Header = ({ onMenuClick }) => {
   const location = useLocation();
 
   // Determine current page title from navigation config
@@ -27,11 +27,21 @@ export const Header = () => {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-background px-8">
-      <h1 className="text-xl font-bold text-white">{pageTitle}</h1>
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background px-4 sm:px-6 lg:h-20 lg:px-8">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-zinc-900/60 text-zinc-300 hover:text-white md:hidden"
+          aria-label="Mở menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <h1 className="text-base font-bold text-white sm:text-lg lg:text-xl">{pageTitle}</h1>
+      </div>
 
-      <div className="flex items-center gap-4">
-        <button className="rounded-full p-2 text-gray-400 hover:bg-white/10 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background relative">
+      <div className="flex items-center gap-2 sm:gap-4">
+        <button className="relative rounded-full p-2 text-gray-400 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
           <Bell className="h-5 w-5" />
           <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
           <span className="sr-only">Notifications</span>

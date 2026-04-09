@@ -13,3 +13,13 @@
     @apply bg-background text-white antialiased;
   }
 }
+
+@layer utilities {
+  .page-gutter {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .page-container {
+    @apply mx-auto w-full max-w-7xl;
+  }
+}

@@ -194,12 +194,12 @@ const MovieDetails = () => {
 
   return (
     <UserLayout>
-      <div className="min-h-screen bg-[#0e0e0e] text-zinc-300 pb-20">
+      <div className="min-h-screen bg-[#0e0e0e] pb-20 text-zinc-300">
         {/* Movie Info Header */}
-        <div className="max-w-7xl mx-auto px-6 pt-10 pb-6 flex flex-col md:flex-row gap-10">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pb-6 pt-8 sm:px-6 md:flex-row md:gap-10 md:pt-10">
           {/* Poster */}
           {poster && (
-            <div className="w-48 md:w-72 shrink-0 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-zinc-800">
+            <div className="aspect-[2/3] w-40 shrink-0 overflow-hidden rounded-2xl border border-zinc-800 shadow-2xl sm:w-48 md:w-72">
               <img src={poster} alt={movie.title} className="w-full h-full object-cover" />
             </div>
           )}
@@ -212,7 +212,7 @@ const MovieDetails = () => {
               </span>
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 line-clamp-2 leading-tight">
+            <h1 className="mb-4 line-clamp-2 text-3xl font-bold leading-tight text-white sm:text-4xl md:text-5xl">
               {movie.title}
             </h1>
 
@@ -237,7 +237,7 @@ const MovieDetails = () => {
                 <p className="text-zinc-200 leading-relaxed text-[15px]">{movie.description || 'Chưa có thông tin.'}</p>
               </div>
 
-              <div className="flex gap-16">
+              <div className="flex flex-col gap-4 sm:flex-row sm:gap-12">
                 <div>
                   <h3 className="text-zinc-400 text-sm font-medium mb-1 uppercase tracking-wider">Đạo diễn</h3>
                   <p className="text-white font-medium">{movie.directors_name || 'Đang cập nhật'}</p>
@@ -253,7 +253,7 @@ const MovieDetails = () => {
         </div>
 
         {/* Showtimes Section */}
-        <div className="max-w-7xl mx-auto px-6 mt-8">
+        <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-6">
 
           {/* Header & Filter */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-4">
@@ -266,7 +266,7 @@ const MovieDetails = () => {
               <select
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
-                className="appearance-none bg-[#141414] border border-zinc-800 text-white font-medium py-3 px-6 pr-12 rounded-xl focus:outline-none focus:ring-1 focus:ring-zinc-600 cursor-pointer min-w-[220px]"
+                className="w-full appearance-none cursor-pointer rounded-xl border border-zinc-800 bg-[#141414] px-4 py-3 pr-10 font-medium text-white focus:outline-none focus:ring-1 focus:ring-zinc-600 sm:min-w-[220px] sm:px-6 sm:pr-12"
               >
                 <option value="">Chọn khu vực</option>
                 {cities.map(c => (
@@ -381,7 +381,7 @@ const MovieDetails = () => {
           </div>
         </div>
         {/* Trailer Section */}
-        <div className="max-w-7xl mx-auto px-6 mt-16 pt-10 border-t border-zinc-800/50">
+        <div className="mx-auto mt-16 max-w-7xl border-t border-zinc-800/50 px-4 pt-10 sm:px-6">
           <div className="flex items-center gap-4 mb-8">
             <div className="w-1.5 h-8 bg-red-600 rounded-full"></div>
             <h2 className="text-2xl font-bold text-white tracking-tight">Trailer</h2>

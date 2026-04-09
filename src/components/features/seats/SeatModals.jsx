@@ -78,6 +78,111 @@ const computeStackHints = (sharedStart, gridStandard, gridVip, gridCouple) => {
   });
 };
 
+const SeatTypeSection = ({
+  title,
+  icon,
+  accentClass,
+  borderClass,
+  seatType,
+  grid,
+  setGrid,
+  manual,
+  setManual,
+  stackHint,
+  loading,
+  onCreateGrid,
+  onAddSingleSeat,
+  onClearError,
+}) => {
+  const IconComponent = icon;
+  const nr = parseInt(grid.num_rows, 10) || 0;
+  const sp = parseInt(grid.seats_per_row, 10) || 0;
+  const preview = nr > 0 && sp > 0 ? nr * sp : 0;
+  return (
+    <div className={`rounded-xl border ${borderClass} bg-zinc-900/40 p-4 space-y-4`}>
+      <div className={`flex items-center gap-2 text-sm font-semibold ${accentClass}`}>
+        <IconComponent className="h-4 w-4 shrink-0" />
+        {title}
+      </div>
+      <div>
+        <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-2">Tạo theo lưới</p>
+        <div className="grid grid-cols-2 gap-2">
+          <Input
+            label="Số hàng"
+            type="number"
+            min="1"
+            max="26"
+            value={grid.num_rows}
+            onChange={(e) => { setGrid((p) => ({ ...p, num_rows: e.target.value })); onClearError?.(); }}
+            className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm"
+          />
+          <Input
+            label="Ghế/hàng"
+            type="number"
+            min="1"
+            max="99"
+            value={grid.seats_per_row}
+            onChange={(e) => { setGrid((p) => ({ ...p, seats_per_row: e.target.value })); onClearError?.(); }}
+            className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm"
+          />
+        </div>
+        {stackHint && (
+          <p className={`text-xs mt-2 ${stackHint.startsWith('Vượt') ? 'text-amber-400/90' : 'text-zinc-500'}`}>
+            {stackHint}
+          </p>
+        )}
+        {preview > 0 && (
+          <p className="text-xs text-zinc-500 mt-2">
+            ≈ <span className="text-zinc-300 font-medium">{preview}</span> ghế trong lưới này
+          </p>
+        )}
+        <Button
+          type="button"
+          variant="secondary"
+          className="mt-3 w-full rounded-full h-9 text-sm"
+          disabled={loading}
+          onClick={onCreateGrid}
+        >
+          Tạo lưới
+        </Button>
+      </div>
+      <div className="border-t border-border/50 pt-3">
+        <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-2">Thêm một ghế</p>
+        <div className="flex flex-wrap gap-2 items-end">
+          <div className="w-16">
+            <Input
+              label="Dãy"
+              placeholder="A"
+              value={manual.row_label}
+              onChange={(e) => setManual((p) => ({ ...p, row_label: e.target.value.toUpperCase().slice(0, 5) }))}
+              className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm uppercase"
+              maxLength={5}
+            />
+          </div>
+          <div className="w-20">
+            <Input
+              label="Số"
+              type="number"
+              min="1"
+              value={manual.number}
+              onChange={(e) => setManual((p) => ({ ...p, number: e.target.value }))}
+              className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm"
+            />
+          </div>
+          <Button
+            type="button"
+            className="rounded-full h-10 px-4 text-sm shrink-0"
+            disabled={loading}
+            onClick={() => onAddSingleSeat(seatType, manual)}
+          >
+            Thêm
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -103,7 +208,6 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
   const isAdd = state.type === 'add';
   const isEdit = state.type === 'edit';
   const isImport = state.type === 'import';
-  const isAddOrEdit = isAdd || isEdit;
   const data = state.data;
 
   useEffect(() => {
@@ -133,7 +237,7 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
       setImportFile(null);
     }
     setError('');
-  }, [state.type, state.data, roomId, isEdit, isAdd, isImport]);
+  }, [state.type, data, roomId, isEdit, isAdd, isImport]);
 
   const resolveRoomId = () => {
     const id = parseInt(formData.room_id, 10);
@@ -277,107 +381,6 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
       .finally(() => setLoading(false));
   };
 
-  const TypeSection = ({
-    title,
-    icon: Icon,
-    accentClass,
-    borderClass,
-    seatType,
-    grid,
-    setGrid,
-    manual,
-    setManual,
-    stackHint,
-    onCreateGrid,
-  }) => {
-    const nr = parseInt(grid.num_rows, 10) || 0;
-    const sp = parseInt(grid.seats_per_row, 10) || 0;
-    const preview = nr > 0 && sp > 0 ? nr * sp : 0;
-    return (
-      <div className={`rounded-xl border ${borderClass} bg-zinc-900/40 p-4 space-y-4`}>
-        <div className={`flex items-center gap-2 text-sm font-semibold ${accentClass}`}>
-          <Icon className="h-4 w-4 shrink-0" />
-          {title}
-        </div>
-        <div>
-          <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-2">Tạo theo lưới</p>
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              label="Số hàng"
-              type="number"
-              min="1"
-              max="26"
-              value={grid.num_rows}
-              onChange={(e) => { setGrid((p) => ({ ...p, num_rows: e.target.value })); setError(''); }}
-              className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm"
-            />
-            <Input
-              label="Ghế/hàng"
-              type="number"
-              min="1"
-              max="99"
-              value={grid.seats_per_row}
-              onChange={(e) => { setGrid((p) => ({ ...p, seats_per_row: e.target.value })); setError(''); }}
-              className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm"
-            />
-          </div>
-          {stackHint && (
-            <p className={`text-xs mt-2 ${stackHint.startsWith('Vượt') ? 'text-amber-400/90' : 'text-zinc-500'}`}>
-              {stackHint}
-            </p>
-          )}
-          {preview > 0 && (
-            <p className="text-xs text-zinc-500 mt-2">
-              ≈ <span className="text-zinc-300 font-medium">{preview}</span> ghế trong lưới này
-            </p>
-          )}
-          <Button
-            type="button"
-            variant="secondary"
-            className="mt-3 w-full rounded-full h-9 text-sm"
-            disabled={loading}
-            onClick={onCreateGrid}
-          >
-            Tạo lưới
-          </Button>
-        </div>
-        <div className="border-t border-border/50 pt-3">
-          <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider mb-2">Thêm một ghế</p>
-          <div className="flex flex-wrap gap-2 items-end">
-            <div className="w-16">
-              <Input
-                label="Dãy"
-                placeholder="A"
-                value={manual.row_label}
-                onChange={(e) => setManual((p) => ({ ...p, row_label: e.target.value.toUpperCase().slice(0, 5) }))}
-                className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm uppercase"
-                maxLength={5}
-              />
-            </div>
-            <div className="w-20">
-              <Input
-                label="Số"
-                type="number"
-                min="1"
-                value={manual.number}
-                onChange={(e) => setManual((p) => ({ ...p, number: e.target.value }))}
-                className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm"
-              />
-            </div>
-            <Button
-              type="button"
-              className="rounded-full h-10 px-4 text-sm shrink-0"
-              disabled={loading}
-              onClick={() => handleSingleSeat(seatType, manual)}
-            >
-              Thêm
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   if (!state.type) return null;
 
   if (isDelete) {
@@ -504,7 +507,7 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
             <code className="text-zinc-400">(room_id, row, number)</code>.
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <TypeSection
+            <SeatTypeSection
               title="Ghế thường"
               icon={Armchair}
               accentClass="text-blue-300"
@@ -515,9 +518,12 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
               manual={manualStandard}
               setManual={setManualStandard}
               stackHint={stackHints[0]}
+              loading={loading}
               onCreateGrid={() => handleCreateGrid('standard', gridStandard, () => setGridStandard(emptyGrid()))}
+              onAddSingleSeat={handleSingleSeat}
+              onClearError={() => setError('')}
             />
-            <TypeSection
+            <SeatTypeSection
               title="Ghế VIP"
               icon={Crown}
               accentClass="text-amber-300"
@@ -528,9 +534,12 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
               manual={manualVip}
               setManual={setManualVip}
               stackHint={stackHints[1]}
+              loading={loading}
               onCreateGrid={() => handleCreateGrid('vip', gridVip, () => setGridVip(emptyGrid()))}
+              onAddSingleSeat={handleSingleSeat}
+              onClearError={() => setError('')}
             />
-            <TypeSection
+            <SeatTypeSection
               title="Sweetbox (Couple)"
               icon={Heart}
               accentClass="text-pink-300"
@@ -541,7 +550,10 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
               manual={manualCouple}
               setManual={setManualCouple}
               stackHint={stackHints[2]}
+              loading={loading}
               onCreateGrid={() => handleCreateGrid('couple', gridCouple, () => setGridCouple(emptyGrid()))}
+              onAddSingleSeat={handleSingleSeat}
+              onClearError={() => setError('')}
             />
           </div>
           <div className="flex justify-end pt-2 border-t border-border/50">

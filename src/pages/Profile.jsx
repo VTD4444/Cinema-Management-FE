@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Ticket, User, UserCircle2 } from 'lucide-react';
 import UserLayout from '../components/layout/UserLayout';
 import useAuthStore from '../store/useAuthStore';
-import { updateUser } from '../api/userApi';
+import { updateMyProfile } from '../api/userApi';
 import { changePassword, getMyProfile } from '../api/authApi';
 
 const Profile = () => {
@@ -72,7 +72,7 @@ const Profile = () => {
             email: user.email || '',
           });
         }
-      } catch (_err) {
+      } catch {
         setMessage('Không thể tải thông tin tài khoản.');
       } finally {
         setLoadingProfile(false);
@@ -105,7 +105,7 @@ const Profile = () => {
         dob: profileForm.birth_date || null,
         phone: profileForm.phone.trim(),
       };
-      const res = await updateUser(currentUserId, payload);
+      const res = await updateMyProfile(currentUserId, payload);
       const updatedUser = res?.data?.user || res?.user || null;
       setAuthState({
         user: {
@@ -116,7 +116,7 @@ const Profile = () => {
         },
       });
       setMessage('Lưu thay đổi thành công.');
-    } catch (_err) {
+    } catch {
       setMessage('Không thể lưu thông tin. Vui lòng thử lại.');
     } finally {
       setSavingProfile(false);

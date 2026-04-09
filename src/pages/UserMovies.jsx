@@ -50,7 +50,7 @@ const UserMovies = () => {
           (movie, idx, arr) => arr.findIndex((x) => x.id === movie.id) === idx,
         );
         setMovies(merged);
-      } catch (e) {
+      } catch {
         setError('Không thể tải danh sách phim.');
       } finally {
         setLoading(false);

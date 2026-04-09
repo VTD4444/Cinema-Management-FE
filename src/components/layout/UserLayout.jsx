@@ -1,18 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, UserCircle, Ticket, CalendarDays, LogOut } from 'lucide-react';
-import useAuthStore from '../../store/useAuthStore';
-import { Link } from 'react-router-dom';
-import { Search, User, UserCircle, Ticket, CalendarDays, LogOut } from 'lucide-react';
+import { Search, User, UserCircle, Ticket, CalendarDays, LogOut, Menu, X } from 'lucide-react';
 import UserFooter from './UserFooter';
 import useAuthStore from '../../store/useAuthStore';
 import { getMyInfo } from '../../api/authApi';
 
 const UserHeader = () => {
   const navigate = useNavigate();
-  const logout = useAuthStore((state) => state.logout);
   const { user, isAuthenticated, logout, updateUser } = useAuthStore();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Fetch updated user info to get the latest full_name, etc.
@@ -43,75 +40,43 @@ const UserHeader = () => {
   const handleLogout = () => {
     logout();
     setIsProfileOpen(false);
+    setIsMobileMenuOpen(false);
     navigate('/login');
   };
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between px-10 py-4 text-sm text-zinc-100 border-b border-zinc-800/70 bg-[#0e0e0e]/90 backdrop-blur-md">
-      <Link to="/home" className="flex items-center gap-3">
+    <header className="sticky top-0 z-50 border-b border-zinc-800/70 bg-[#0e0e0e]/90 text-sm text-zinc-100 backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+      <Link to="/home" className="flex min-w-0 items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
           <img src="/logo.png" alt="CineGo logo" className="h-7 w-7 object-contain" />
         </div>
-        <div>
+        <div className="min-w-0">
           <h1 className="text-lg font-bold text-white tracking-tight leading-none">CineGo</h1>
-          <p className="text-[10px] text-gray-400 mt-1 uppercase font-medium">
+          <p className="mt-1 hidden text-[10px] font-medium uppercase text-gray-400 sm:block">
             Trải nghiệm điện ảnh
           </p>
         </div>
       </Link>
-      <nav className="flex items-center gap-6 text-zinc-300">
+
+      <nav className="hidden items-center gap-6 text-zinc-300 md:flex">
         <Link to="/movies" className="hover:text-white">Phim</Link>
         <Link to="/cinemas" className="hover:text-white">Rạp</Link>
         <Link to="/about" className="hover:text-white">Về chúng tôi</Link>
       </nav>
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-2 sm:gap-4">
         <Link to="/search" className="text-zinc-300 hover:text-white transition-colors">
           <Search className="h-5 w-5" />
         </Link>
+        <button
+          type="button"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800/50 text-zinc-300 md:hidden"
+          onClick={() => setIsMobileMenuOpen((v) => !v)}
+          aria-label="Mở menu"
+        >
+          {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </button>
         <div className="relative" ref={dropdownRef}>
-          <button 
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors"
-          >
-            <User className="h-4 w-4" />
-          </button>
-          
-          {/* Dropdown Menu */}
-          {isProfileOpen && (
-            <div className="absolute right-0 mt-3 w-56 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl overflow-hidden py-2" style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
-              <Link 
-                to="/profile" 
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
-                onClick={() => setIsProfileOpen(false)}
-              >
-                <UserCircle className="w-4 h-4" />
-                <span>Thông tin cá nhân</span>
-              </Link>
-              <Link 
-                to="/my-vouchers" 
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
-                onClick={() => setIsProfileOpen(false)}
-              >
-                <Ticket className="w-4 h-4" />
-                <span>Voucher của tôi</span>
-              </Link>
-              <Link 
-                to="/my-tickets" 
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
-                onClick={() => setIsProfileOpen(false)}
-              >
-                <CalendarDays className="w-4 h-4" />
-                <span>Vé của tôi</span>
-              </Link>
-              <button
-                type="button"
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Đăng xuất</span>
-              </button>
-            </div>
           {isAuthenticated ? (
             <>
               <button 
@@ -121,7 +86,7 @@ const UserHeader = () => {
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-700 text-white">
                   <User className="h-3.5 w-3.5" />
                 </div>
-                <span className="text-sm font-medium truncate max-w-[120px] text-left">
+                <span className="max-w-[120px] truncate text-left text-sm font-medium">
                   {user?.full_name || 'Người dùng'}
                 </span>
               </button>
@@ -159,10 +124,7 @@ const UserHeader = () => {
                   </Link>
                   <div className="border-t border-zinc-800 mt-1">
                     <button
-                      onClick={() => {
-                        logout();
-                        setIsProfileOpen(false);
-                      }}
+                      onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
@@ -183,6 +145,22 @@ const UserHeader = () => {
           )}
         </div>
       </div>
+      </div>
+
+      {isMobileMenuOpen && (
+        <div className="border-t border-zinc-800 px-4 pb-4 pt-3 md:hidden">
+          <nav className="flex flex-col gap-1 text-zinc-300">
+            <Link to="/movies" onClick={() => setIsMobileMenuOpen(false)} className="rounded-lg px-3 py-2 hover:bg-zinc-800/60 hover:text-white">Phim</Link>
+            <Link to="/cinemas" onClick={() => setIsMobileMenuOpen(false)} className="rounded-lg px-3 py-2 hover:bg-zinc-800/60 hover:text-white">Rạp</Link>
+            <Link to="/about" onClick={() => setIsMobileMenuOpen(false)} className="rounded-lg px-3 py-2 hover:bg-zinc-800/60 hover:text-white">Về chúng tôi</Link>
+            {!isAuthenticated && (
+              <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="mt-1 rounded-lg border border-zinc-700 px-3 py-2 text-center hover:border-zinc-500 hover:text-white">
+                Đăng nhập / Đăng ký
+              </Link>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 };

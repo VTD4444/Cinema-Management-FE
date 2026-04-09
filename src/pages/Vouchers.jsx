@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, Edit, Trash2, Pencil } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Plus, Filter, Trash2, Pencil } from 'lucide-react';
 import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import VoucherModals from '../components/features/voucher/VoucherModals';
 import { getVouchersAdmin, createVoucher, updateVoucher, deleteVoucher } from '../api/voucherApi';
@@ -16,7 +16,7 @@ const Vouchers = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
 
-    const fetchVouchers = async () => {
+    const fetchVouchers = useCallback(async () => {
         try {
             setLoading(true);
             const response = await getVouchersAdmin({ pageNo, pageSize: 10 });
@@ -36,11 +36,11 @@ const Vouchers = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [pageNo]);
 
     useEffect(() => {
         fetchVouchers();
-    }, [pageNo]);
+    }, [fetchVouchers]);
 
     const handleSaveVoucher = async (payload, type, id) => {
         try {

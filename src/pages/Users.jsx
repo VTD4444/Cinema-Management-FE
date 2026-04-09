@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Filter, Edit, Trash2, Shield, User } from 'lucide-react';
-import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, MobileTableCards } from '../components/ui';
 import UserModals from '../components/features/user/UserModals';
 import { getAllUsers } from '../api/userApi';
 import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
@@ -13,7 +13,7 @@ const Users = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         setLoading(true);
         try {
             const response = await getAllUsers({ pageNo, pageSize: 10 });
@@ -27,15 +27,15 @@ const Users = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [pageNo]);
 
     useEffect(() => {
         fetchUsers();
-    }, [pageNo]);
+    }, [fetchUsers]);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
                         Danh sách tài khoản
@@ -68,7 +68,7 @@ const Users = () => {
 
                 <Button
                     onClick={() => setModalState({ type: 'add', data: null })}
-                    className="gap-2 rounded-full px-5 h-11 bg-primary hover:bg-primary-hover text-white font-medium shadow-[0_0_15px_rgba(229,9,20,0.3)] hover:scale-105 transition-all"
+                    className="h-11 gap-2 rounded-full px-5 bg-primary font-medium text-white shadow-[0_0_15px_rgba(229,9,20,0.3)] transition-all hover:scale-105 hover:bg-primary-hover"
                 >
                     <Plus className="h-4 w-4" />
                     Thêm Tài Khoản
@@ -78,6 +78,24 @@ const Users = () => {
             {/* Data Table */}
             <div className="rounded-xl border border-border bg-surface/30 flex flex-col overflow-hidden shadow-sm">
                 <div className="p-0 bg-transparent">
+                    <MobileTableCards className="p-3">
+                        {loading ? (
+                            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 text-center text-sm text-zinc-500">Đang tải dữ liệu...</div>
+                        ) : users.length === 0 ? (
+                            <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 text-center text-sm text-zinc-500">Không tìm thấy tài khoản nào.</div>
+                        ) : (
+                            users.map((item) => (
+                                <div key={`mobile-${item.id}`} className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+                                    <p className="text-xs font-mono text-zinc-500">#{item.id}</p>
+                                    <p className="mt-1 text-sm font-semibold text-white">{item.full_name}</p>
+                                    <p className="mt-1 text-xs text-zinc-400">{item.email}</p>
+                                    <p className="mt-1 text-xs text-zinc-500">{item.phone || '-'}</p>
+                                </div>
+                            ))
+                        )}
+                    </MobileTableCards>
+
+                    <div className="hidden md:block">
                     <Table className="border-0 rounded-none bg-transparent">
                         <TableHeader className="bg-transparent border-b border-border/40">
                             <TableRow className="hover:bg-transparent border-0">
@@ -160,10 +178,11 @@ const Users = () => {
                             )}
                         </TableBody>
                     </Table>
+                    </div>
                 </div>
 
                 {!loading && users.length > 0 && (
-                    <div className="flex items-center justify-between px-6 py-4 bg-surface/50 border-t border-border/40">
+                    <div className="flex flex-col gap-3 px-4 py-4 bg-surface/50 border-t border-border/40 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                         <span className="text-xs font-medium text-zinc-500">
                             Hiển thị {(pageNo - 1) * 10 + 1}-{Math.min(pageNo * 10, totalItems)} trong {totalItems} tài khoản
                         </span>

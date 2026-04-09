@@ -63,7 +63,7 @@ const PaymentResult = () => {
           setIsSuccess(false);
           setErrorMsg(data?.message || 'Giao dịch bị từ chối hoặc đã hủy.');
         }
-      } catch (err) {
+      } catch {
         // Fallback: nếu API lỗi thì vẫn dùng vnp_ResponseCode để hiển thị
         const responseCode = searchParams.get('vnp_ResponseCode');
         if (responseCode === '00') {

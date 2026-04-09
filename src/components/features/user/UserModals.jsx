@@ -4,8 +4,6 @@ import { UserPlus } from 'lucide-react';
 import { createUser, updateUser, deleteUser } from '../../../api/userApi';
 
 const UserModals = ({ state, onClose, onRefresh }) => {
-    if (!state.type) return null;
-
     const isAddOrEdit = state.type === 'add' || state.type === 'edit';
     const isDelete = state.type === 'delete';
     const data = state.data;
@@ -104,6 +102,8 @@ const UserModals = ({ state, onClose, onRefresh }) => {
             setLoading(false);
         }
     };
+
+    if (!state.type) return null;
 
     // Render Delete Validation/Confirmation Modal
     if (isDelete) {

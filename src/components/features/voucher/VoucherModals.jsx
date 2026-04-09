@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Input, Button, Select } from '../../ui';
 
 const VoucherModals = ({ state, onClose, onSave }) => {
-    if (!state.type) return null;
-
     const isDelete = state.type === 'delete';
     const isAddOrEdit = state.type === 'add' || state.type === 'edit';
     const data = state.data;
@@ -71,6 +69,8 @@ const VoucherModals = ({ state, onClose, onSave }) => {
         }
         setLoading(false);
     };
+
+    if (!state.type) return null;
 
     if (isDelete) {
         return (

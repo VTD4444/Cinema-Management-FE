@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, ChevronLeft, ChevronRight, Loader2, X, Eye, Ticket, ShoppingBag, RotateCcw, ScanLine } from 'lucide-react';
-import { Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Button } from '../components/ui';
+import { Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Button, MobileTableCards } from '../components/ui';
 import { getAdminOrders, getOrderDetail } from '../api/orderApi';
 
 const STATUS_CONFIG = {
@@ -256,7 +256,7 @@ const Orders = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
             Quản lý đơn hàng
@@ -309,6 +309,37 @@ const Orders = () => {
 
       {/* Data Table */}
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/20 overflow-hidden shadow-sm backdrop-blur-sm">
+        <MobileTableCards className="p-3">
+          {loading ? (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 text-center text-sm text-zinc-500">Đang tải danh sách đơn hàng...</div>
+          ) : filteredOrders.length > 0 ? (
+            filteredOrders.map((item, idx) => (
+              <div key={`card-${item.order_id || item.booking_code || idx}`} className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-bold text-white">#{item.order_id}</p>
+                  <StatusBadge status={item.order_status || 'PENDING'} />
+                </div>
+                <p className="mt-1 text-xs font-mono text-red-400">{item.booking_code || '—'}</p>
+                <p className="mt-2 line-clamp-1 text-sm text-zinc-200">{item.movie_name || '—'}</p>
+                <p className="text-xs text-zinc-500">{item.cinema} - {item.room}</p>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-xs text-zinc-500">Tổng tiền</span>
+                  <span className="text-sm font-bold text-white">{formatCurrency(item.total_amount)}</span>
+                </div>
+                <button
+                  onClick={() => setSelectedOrderId(item.order_id || item.id)}
+                  className="mt-3 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-200"
+                >
+                  Xem chi tiết
+                </button>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 text-center text-sm text-zinc-500">Không tìm thấy đơn hàng nào</div>
+          )}
+        </MobileTableCards>
+
+        <div className="hidden md:block">
         <Table className="border-0">
           <TableHeader className="bg-zinc-800/50">
             <TableRow className="hover:bg-transparent border-0">
@@ -332,7 +363,6 @@ const Orders = () => {
               </TableRow>
             ) : filteredOrders.length > 0 ? (
               filteredOrders.map((item, idx) => {
-                const status = STATUS_CONFIG[item.order_status] || STATUS_CONFIG.PENDING;
                 return (
                   <TableRow key={item.order_id || item.booking_code || idx} className="border-b border-zinc-800/50 hover:bg-white/5 transition-colors">
                     <TableCell className="pl-6 py-4">
@@ -392,9 +422,10 @@ const Orders = () => {
             )}
           </TableBody>
         </Table>
+        </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-6 py-4 bg-zinc-800/30 border-t border-zinc-800">
+        <div className="flex flex-col gap-3 px-4 py-4 bg-zinc-800/30 border-t border-zinc-800 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span className="text-xs font-medium text-zinc-500">
             Hiển thị {Math.min(((page - 1) * PAGE_SIZE) + 1, totalItems)}-{Math.min(page * PAGE_SIZE, totalItems)} trong {totalItems} bản ghi
           </span>

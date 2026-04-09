@@ -5,8 +5,6 @@ import { createFood, updateFood, deleteFood } from '../../../api/foodApi';
 import { uploadImage } from '../../../api/uploadApi';
 
 const FoodModals = ({ state, onClose }) => {
-    if (!state.type) return null;
-
     const isDelete = state.type === 'delete';
     const isView = state.type === 'view';
     const isAddOrEdit = state.type === 'add' || state.type === 'edit';
@@ -154,6 +152,8 @@ const FoodModals = ({ state, onClose }) => {
             setLoading(false);
         }
     };
+
+    if (!state.type) return null;
 
     // Render Delete Validation/Confirmation Modal
     if (isDelete) {

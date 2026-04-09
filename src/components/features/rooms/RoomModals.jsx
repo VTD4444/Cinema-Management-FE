@@ -64,6 +64,49 @@ const buildSeatPayloads = (roomId, seatType, nr, sp, rowStart) => {
   return payloads;
 };
 
+const RoomAddSeatBlock = ({ title, icon, accentClass, borderClass, grid, setGrid, stackHint, onClearError }) => {
+  const IconComponent = icon;
+  return (
+    <div className={`rounded-xl border ${borderClass} bg-zinc-900/40 p-4 space-y-3`}>
+    <div className={`flex items-center gap-2 text-sm font-semibold ${accentClass}`}>
+      <IconComponent className="h-4 w-4 shrink-0" />
+      {title}
+    </div>
+    <p className="text-xs text-zinc-500 leading-relaxed">
+      Để trống <span className="text-zinc-400">số hàng</span> và <span className="text-zinc-400">ghế/hàng</span> nếu không tạo loại này.
+    </p>
+    <div className="grid grid-cols-2 gap-2">
+      <Input
+        label="Số hàng"
+        type="number"
+        min="1"
+        max="26"
+        placeholder="—"
+        value={grid.num_rows}
+        onChange={(e) => { setGrid((p) => ({ ...p, num_rows: e.target.value })); onClearError?.(); }}
+        className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm"
+      />
+      <Input
+        label="Ghế/hàng"
+        type="number"
+        min="1"
+        max="99"
+        placeholder="—"
+        value={grid.seats_per_row}
+        onChange={(e) => { setGrid((p) => ({ ...p, seats_per_row: e.target.value })); onClearError?.(); }}
+        className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm"
+      />
+    </div>
+    {stackHint && (
+      <p className="text-xs text-zinc-500">
+        ≈ <span className="text-zinc-300 font-medium">{stackHint.seats}</span> ghế · hàng{' '}
+        <span className="text-zinc-300 font-medium">{stackHint.rowsText}</span>
+      </p>
+    )}
+    </div>
+  );
+};
+
 const RoomModals = ({ state, onClose, onSuccess, cinemaId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -94,7 +137,7 @@ const RoomModals = ({ state, onClose, onSuccess, cinemaId }) => {
       setSeatGridCouple(emptySeatGrid());
     }
     setError('');
-  }, [state.type, state.data]);
+  }, [state.type, data]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -276,46 +319,6 @@ const RoomModals = ({ state, onClose, onSuccess, cinemaId }) => {
         })
       : [null, null, null];
 
-    const RoomAddSeatBlock = ({ title, icon: Icon, accentClass, borderClass, grid, setGrid, stackHint }) => (
-      <div className={`rounded-xl border ${borderClass} bg-zinc-900/40 p-4 space-y-3`}>
-        <div className={`flex items-center gap-2 text-sm font-semibold ${accentClass}`}>
-          <Icon className="h-4 w-4 shrink-0" />
-          {title}
-        </div>
-        <p className="text-xs text-zinc-500 leading-relaxed">
-          Để trống <span className="text-zinc-400">số hàng</span> và <span className="text-zinc-400">ghế/hàng</span> nếu không tạo loại này.
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          <Input
-            label="Số hàng"
-            type="number"
-            min="1"
-            max="26"
-            placeholder="—"
-            value={grid.num_rows}
-            onChange={(e) => { setGrid((p) => ({ ...p, num_rows: e.target.value })); setError(''); }}
-            className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm"
-          />
-          <Input
-            label="Ghế/hàng"
-            type="number"
-            min="1"
-            max="99"
-            placeholder="—"
-            value={grid.seats_per_row}
-            onChange={(e) => { setGrid((p) => ({ ...p, seats_per_row: e.target.value })); setError(''); }}
-            className="bg-zinc-900/50 border-zinc-800 rounded-lg h-10 text-sm"
-          />
-        </div>
-        {stackHint && (
-          <p className="text-xs text-zinc-500">
-            ≈ <span className="text-zinc-300 font-medium">{stackHint.seats}</span> ghế · hàng{' '}
-            <span className="text-zinc-300 font-medium">{stackHint.rowsText}</span>
-          </p>
-        )}
-      </div>
-    );
-
     return (
       <Modal
         isOpen
@@ -361,6 +364,7 @@ const RoomModals = ({ state, onClose, onSuccess, cinemaId }) => {
                   grid={seatGridStandard}
                   setGrid={setSeatGridStandard}
                   stackHint={stackPreviews[0]}
+                  onClearError={() => setError('')}
                 />
                 <RoomAddSeatBlock
                   title="Ghế VIP"
@@ -370,6 +374,7 @@ const RoomModals = ({ state, onClose, onSuccess, cinemaId }) => {
                   grid={seatGridVip}
                   setGrid={setSeatGridVip}
                   stackHint={stackPreviews[1]}
+                  onClearError={() => setError('')}
                 />
                 <RoomAddSeatBlock
                   title="Sweetbox"
@@ -379,6 +384,7 @@ const RoomModals = ({ state, onClose, onSuccess, cinemaId }) => {
                   grid={seatGridCouple}
                   setGrid={setSeatGridCouple}
                   stackHint={stackPreviews[2]}
+                  onClearError={() => setError('')}
                 />
               </div>
             </div>

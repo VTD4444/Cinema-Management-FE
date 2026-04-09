@@ -19,7 +19,7 @@ const CityModals = ({ state, onClose, onSuccess }) => {
       setFormData({ name: '' });
     }
     setError('');
-  }, [state.type, state.data]);
+  }, [state.type, data]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

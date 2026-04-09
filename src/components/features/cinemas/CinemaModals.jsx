@@ -41,7 +41,7 @@ const CinemaModals = ({ state, onClose, onSuccess }) => {
       setFormData({ name: '', address: '', province_id: '', room_count: '' });
     }
     setError('');
-  }, [state.type, state.data]);
+  }, [state.type, data]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

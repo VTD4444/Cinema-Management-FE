@@ -25,7 +25,7 @@ const getYoutubeEmbedUrl = (url) => {
       const id = parsed.searchParams.get('v');
       return id ? `https://www.youtube.com/embed/${id}` : '';
     }
-  } catch (_e) {
+  } catch {
     return '';
   }
   return '';
@@ -90,7 +90,7 @@ const UserMovieDetail = () => {
         else setError('Không tìm thấy phim.');
         setCities(cityList);
         if (cityList.length > 0) setSelectedCity(String(cityList[0].id));
-      } catch (_e) {
+      } catch {
         setError('Không thể tải chi tiết phim.');
       } finally {
         setLoading(false);

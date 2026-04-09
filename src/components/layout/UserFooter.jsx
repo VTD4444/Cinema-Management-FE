@@ -19,8 +19,8 @@ const FOOTER_COLUMNS = [
 const UserFooter = () => {
   return (
     <footer className="mt-14 border-t border-zinc-900 bg-[#090909] text-zinc-400">
-      <div className="mx-auto max-w-6xl px-6 py-10 sm:px-10">
-        <div className="grid gap-8 border-b border-zinc-900 pb-8 md:grid-cols-4">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="grid gap-8 border-b border-zinc-900 pb-8 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-zinc-100">
               <img src="/logo.png" alt="CineGo logo" className="h-5 w-5 object-contain" />

@@ -21,7 +21,7 @@ const GenreModals = ({ state, onClose, onSuccess }) => {
       setName('');
     }
     setError('');
-  }, [state.type, state.data]);
+  }, [state.type, data]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

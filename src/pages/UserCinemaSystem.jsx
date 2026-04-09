@@ -21,9 +21,6 @@ const imageFromCinema = (cinema) => {
   return null;
 };
 
-const imageCountFromCinema = (cinema) =>
-  Array.isArray(cinema?.image_urls) ? cinema.image_urls.length : 0;
-
 const statusLabel = (cinema) => {
   const created = cinema?.created_at ? new Date(cinema.created_at) : null;
   if (created && !Number.isNaN(created.getTime())) {
@@ -51,7 +48,7 @@ const UserCinemaSystem = () => {
         const list = withoutSoftDeleted(Array.isArray(raw) ? raw : []);
         setCinemas(list);
         if (list[0]?.id) setSelectedCinemaId(list[0].id);
-      } catch (_e) {
+      } catch {
         setError('Không thể tải danh sách rạp.');
       } finally {
         setLoading(false);
