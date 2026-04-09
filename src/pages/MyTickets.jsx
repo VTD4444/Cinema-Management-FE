@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import UserLayout from '../components/layout/UserLayout';
-import { Calendar, MapPin, CheckCircle2, AlertCircle, Hourglass, X, ScanLine } from 'lucide-react';
+import { Calendar, MapPin, CheckCircle2, AlertCircle, Hourglass, X, ScanLine, ShoppingBag, Loader2, Ticket } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
-import { getMyOrderHistory } from '../api/orderApi';
+import { getMyOrderHistory, getOrderDetail } from '../api/orderApi';
 import useAuthStore from '../store/useAuthStore';
 
 const formatCurrency = (amount) => {
@@ -32,15 +32,15 @@ const TicketCard = ({ ticket, onShowQR, onShowDetails }) => {
               {isSuccess && (
                 ticket.checkedIn
                   ? <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-                      <ScanLine className="w-3 h-3" /> Đã check-in
-                    </span>
+                    <ScanLine className="w-3 h-3" /> Đã check-in
+                  </span>
                   : <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400">
-                      <ScanLine className="w-3 h-3" /> Chưa check-in
-                    </span>
+                    <ScanLine className="w-3 h-3" /> Chưa check-in
+                  </span>
               )}
             </div>
             <p className="text-sm text-zinc-400 mb-4">{ticket.movie.genres} • {ticket.movie.duration}</p>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-zinc-300">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-red-500" />
@@ -52,7 +52,7 @@ const TicketCard = ({ ticket, onShowQR, onShowDetails }) => {
               </div>
               <div className="flex items-center gap-2 sm:col-span-2">
                 <svg className="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 18V9C4 7.89543 4.89543 7 6 7H18C19.1046 7 20 7.89543 20 9V18M4 18H20M4 18V20C4 20.5523 4.44772 21 5 21H19C19.5523 21 20 20.5523 20 20V18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4 18V9C4 7.89543 4.89543 7 6 7H18C19.1046 7 20 7.89543 20 9V18M4 18H20M4 18V20C4 20.5523 4.44772 21 5 21H19C19.5523 21 20 20.5523 20 20V18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span>Ghế: <span className="text-white font-medium">{ticket.seats}</span></span>
               </div>
@@ -74,7 +74,7 @@ const TicketCard = ({ ticket, onShowQR, onShowDetails }) => {
               <span className="w-1 h-1 rounded-full bg-zinc-600"></span>
               <span>Tổng tiền: <span className="text-zinc-300">{formatCurrency(ticket.totalPrice)}</span></span>
             </div>
-            
+
             {/* Status indicator */}
             <div className="flex items-center gap-2 text-sm font-medium">
               {isSuccess && (
@@ -102,17 +102,17 @@ const TicketCard = ({ ticket, onShowQR, onShowDetails }) => {
           <div className="flex items-center gap-3 w-full sm:w-auto">
             {isSuccess && (
               <>
-                <button 
+                <button
                   onClick={() => onShowDetails(ticket)}
                   className="flex-1 sm:flex-none px-4 py-2 rounded-lg border border-zinc-700 text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
                 >
                   Xem chi tiết
                 </button>
-                <button 
+                <button
                   onClick={() => onShowQR(ticket)}
                   className="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><rect x="7" y="7" width="3" height="3"/><rect x="14" y="7" width="3" height="3"/><rect x="7" y="14" width="3" height="3"/><rect x="14" y="14" width="3" height="3"/></svg>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><rect x="7" y="7" width="3" height="3" /><rect x="14" y="7" width="3" height="3" /><rect x="7" y="14" width="3" height="3" /><rect x="14" y="14" width="3" height="3" /></svg>
                   Xem QR vé
                 </button>
               </>
@@ -140,6 +140,31 @@ const MyTickets = () => {
   const [loading, setLoading] = useState(true);
   const [selectedQrTicket, setSelectedQrTicket] = useState(null);
   const [selectedDetailTicket, setSelectedDetailTicket] = useState(null);
+  const [orderDetail, setOrderDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const fetchOrderDetail = async (orderId) => {
+    setDetailLoading(true);
+    setOrderDetail(null);
+    try {
+      const res = await getOrderDetail(orderId);
+      setOrderDetail(res?.data);
+    } catch (err) {
+      console.error('Lỗi lấy chi tiết đơn hàng:', err);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleShowQR = (ticket) => {
+    setSelectedQrTicket(ticket);
+    if (ticket.orderId) fetchOrderDetail(ticket.orderId);
+  };
+
+  const handleShowDetails = (ticket) => {
+    setSelectedDetailTicket(ticket);
+    if (ticket.orderId) fetchOrderDetail(ticket.orderId);
+  };
 
   const tabs = [
     { id: 'all', label: 'Tất cả', payload: '' },
@@ -160,19 +185,19 @@ const MyTickets = () => {
 
         const res = await getMyOrderHistory(params);
         const dataItems = res?.data?.items || [];
-        
+
         // Transform backend data to match TicketCard props
         const formatted = dataItems.map(item => {
           const dateObj = new Date(item.showtime);
           const duration = item.duration || 120;
           const runtimeH = Math.floor(duration / 60);
           const runtimeM = duration % 60;
-          
+
           return {
             id: item.booking_code || `ORD-${item.order_id}`,
+            orderId: item.order_id,
             status: item.payment_status === 'SUCCESS' ? 'success' : (item.payment_status === 'FAILED' ? 'failed' : 'processing'),
-            // Nếu showtime đã qua thì khả năng cao là đã check-in (chưa có field riêng từ API)
-            checkedIn: item.ticket_status === 'CHECKED_IN' || (new Date(item.showtime) < new Date()),
+            checkedIn: item.tickets[0].status === 'CHECKED_IN' || (new Date(item.showtime) < new Date()),
             movie: {
               title: item.movie_name || 'Phim rạp',
               poster: item.poster || 'https://via.placeholder.com/150',
@@ -208,16 +233,15 @@ const MyTickets = () => {
       <div className="min-h-screen bg-[#0e0e0e] text-white">
         <div className="max-w-4xl mx-auto px-6 py-12">
           <h1 className="text-3xl font-bold mb-8">Vé của tôi</h1>
-          
+
           {/* Tabs */}
           <div className="flex items-center gap-6 border-b border-zinc-800 mb-8 overflow-x-auto">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-3 text-sm font-medium transition-colors relative whitespace-nowrap ${
-                  activeTab === tab.id ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
-                }`}
+                className={`py-3 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === tab.id ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
               >
                 {tab.label}
                 {activeTab === tab.id && (
@@ -235,11 +259,11 @@ const MyTickets = () => {
               </div>
             ) : tickets.length > 0 ? (
               tickets.map((ticket, idx) => (
-                <TicketCard 
-                  key={`${ticket.id}-${idx}`} 
-                  ticket={ticket} 
-                  onShowQR={setSelectedQrTicket} 
-                  onShowDetails={setSelectedDetailTicket}
+                <TicketCard
+                  key={`${ticket.id}-${idx}`}
+                  ticket={ticket}
+                  onShowQR={handleShowQR}
+                  onShowDetails={handleShowDetails}
                 />
               ))
             ) : (
@@ -258,52 +282,41 @@ const MyTickets = () => {
             {/* Header */}
             <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
               <h3 className="font-bold text-white uppercase tracking-wider">Mã vé điện tử</h3>
-              <button onClick={() => setSelectedQrTicket(null)} className="text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-zinc-700/50 p-2 rounded-full transition-colors">
+              <button onClick={() => { setSelectedQrTicket(null); setOrderDetail(null); }} className="text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-zinc-700/50 p-2 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             {/* Body */}
             <div className="p-8 flex flex-col items-center bg-white overflow-y-auto max-h-[60vh]">
-              
-              <div className="bg-white p-2 rounded-xl mb-6">
-                <QRCodeSVG 
-                  value={selectedQrTicket.id} 
-                  size={200}
-                  level="H" // High error correction
-                  fgColor="#000000"
-                  bgColor="#ffffff"
-                />
-              </div>
-
-              <span className="text-sm font-semibold text-zinc-500 uppercase tracking-widest mb-1">Booking Code</span>
-              <span className="text-3xl font-black text-black tracking-widest mb-6">{selectedQrTicket.id}</span>
-
-              {/* Individual Seat Ticket Codes (if any) */}
-              {selectedQrTicket.ticketCodes && selectedQrTicket.ticketCodes.length > 0 && (
-                <div className="w-full pt-6 border-t border-zinc-200">
-                  <h4 className="text-zinc-600 font-bold mb-3 text-center text-sm uppercase">Mã vé từng ghế</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                     {selectedQrTicket.ticketCodes.map((code, index) => (
-                       <div key={index} className="flex flex-col items-center bg-zinc-50 p-3 rounded-lg border border-zinc-200">
-                          <QRCodeSVG value={code} size={60} />
-                          <span className="text-xs font-bold text-zinc-700 mt-2">{code}</span>
-                       </div>
-                     ))}
-                  </div>
+              {detailLoading ? (
+                <div className="flex flex-col items-center gap-3 py-10">
+                  <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+                  <span className="text-zinc-500 text-sm">Đang tải mã QR...</span>
+                </div>
+              ) : orderDetail?.qr_code_url ? (
+                <div className="mb-6">
+                  <img src={orderDetail.qr_code_url} alt="QR Code" className="w-52 h-52 rounded-xl" />
+                </div>
+              ) : (
+                <div className="bg-white p-2 rounded-xl mb-6">
+                  <QRCodeSVG value={selectedQrTicket.id} size={200} level="H" fgColor="#000000" bgColor="#ffffff" />
                 </div>
               )}
+
+              <span className="text-sm font-semibold text-zinc-500 uppercase tracking-widest mb-1">Booking Code</span>
+              <span className="text-3xl font-black text-black tracking-widest mb-6">{orderDetail?.booking_code || selectedQrTicket.id}</span>
             </div>
 
             {/* Footer details */}
             <div className="p-6 bg-[#141414] border-t border-zinc-800">
-               <div className="text-center">
-                 <div className="text-white font-bold mb-1 line-clamp-1">{selectedQrTicket.movie.title}</div>
-                 <div className="text-zinc-400 text-xs">{selectedQrTicket.showtime.date} - {selectedQrTicket.showtime.time} • Ghế: {selectedQrTicket.seats}</div>
-               </div>
-               <button onClick={() => setSelectedQrTicket(null)} className="mt-6 w-full py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors">
-                 Đóng
-               </button>
+              <div className="text-center">
+                <div className="text-white font-bold mb-1 line-clamp-1">{selectedQrTicket.movie.title}</div>
+                <div className="text-zinc-400 text-xs">{selectedQrTicket.showtime.date} - {selectedQrTicket.showtime.time} • Ghế: {selectedQrTicket.seats}</div>
+              </div>
+              <button onClick={() => { setSelectedQrTicket(null); setOrderDetail(null); }} className="mt-6 w-full py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-colors">
+                Đóng
+              </button>
             </div>
           </div>
         </div>
@@ -316,88 +329,163 @@ const MyTickets = () => {
             {/* Header */}
             <div className="p-5 border-b border-zinc-800 flex justify-between items-center bg-[#1c1c1c]">
               <h3 className="font-bold text-white text-lg">Chi tiết đơn hàng</h3>
-              <button onClick={() => setSelectedDetailTicket(null)} className="text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-zinc-700/50 p-2 rounded-full transition-colors">
+              <button onClick={() => { setSelectedDetailTicket(null); setOrderDetail(null); }} className="text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-zinc-700/50 p-2 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             {/* Body */}
             <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
-              
-              {/* Movie info block */}
-              <div className="flex gap-4">
-                <img src={selectedDetailTicket.movie.poster} alt="poster" className="w-20 rounded-lg aspect-[2/3] object-cover bg-zinc-800" />
-                <div>
-                  <h4 className="text-xl font-bold text-white mb-1">{selectedDetailTicket.movie.title}</h4>
-                  <p className="text-sm text-zinc-400 mb-2">{selectedDetailTicket.movie.genres} • {selectedDetailTicket.movie.duration}</p>
-                  <span className="bg-zinc-800 text-red-500 text-xs font-bold px-2 py-1 rounded">{selectedDetailTicket.movie.format || 'STND'}</span>
+              {detailLoading ? (
+                <div className="flex flex-col items-center gap-3 py-10">
+                  <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+                  <span className="text-zinc-500 text-sm">Đang tải chi tiết...</span>
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Movie info block */}
+                  <div className="flex gap-4">
+                    <img src={orderDetail?.poster || selectedDetailTicket.movie.poster} alt="poster" className="w-20 rounded-lg aspect-[2/3] object-cover bg-zinc-800" />
+                    <div>
+                      <h4 className="text-xl font-bold text-white mb-1">{orderDetail?.movie_name || selectedDetailTicket.movie.title}</h4>
+                      <p className="text-sm text-zinc-400 mb-2">
+                        {orderDetail?.genres ? orderDetail.genres.join(', ') : selectedDetailTicket.movie.genres}
+                        {' • '}
+                        {orderDetail?.duration ? `${Math.floor(orderDetail.duration / 60)}h ${orderDetail.duration % 60} phút` : selectedDetailTicket.movie.duration}
+                      </p>
+                    </div>
+                  </div>
 
-              {/* Data table */}
-              <div className="bg-[#1a1a1a] rounded-xl p-5 border border-zinc-800/50 space-y-4 text-sm">
-                 <div className="flex justify-between items-center">
-                    <span className="text-zinc-400">Mã đặt chỗ (Booking)</span>
-                    <span className="font-bold text-white">{selectedDetailTicket.id}</span>
-                 </div>
-                 <div className="w-full h-px bg-zinc-800 border-dashed" />
-                 
-                 <div className="flex justify-between items-center">
-                    <span className="text-zinc-400">Thời gian chiếu</span>
-                    <span className="font-medium text-white text-right">
-                      {selectedDetailTicket.showtime.time}<br/>
-                      <span className="text-xs text-zinc-500">{selectedDetailTicket.showtime.date}</span>
-                    </span>
-                 </div>
-                 <div className="w-full h-px bg-zinc-800 border-dashed" />
-                 
-                 <div className="flex justify-between items-center">
-                    <span className="text-zinc-400">Rạp chiếu</span>
-                    <span className="font-medium text-white max-w-[200px] text-right line-clamp-2">{selectedDetailTicket.showtime.cinema}</span>
-                 </div>
-                 <div className="w-full h-px bg-zinc-800 border-dashed" />
-                 
-                 <div className="flex justify-between items-center">
-                    <span className="text-zinc-400">Vị trí ghế</span>
-                    <span className="font-bold text-red-400">{selectedDetailTicket.seats}</span>
-                 </div>
-                 <div className="w-full h-px bg-zinc-800 border-dashed" />
-                 <div className="flex justify-between items-center">
-                    <span className="text-zinc-400">Trạng thái vé</span>
-                    {selectedDetailTicket.checkedIn ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-                        <ScanLine className="w-3.5 h-3.5" /> Đã check-in
+                  {/* QR Code */}
+                  {orderDetail?.qr_code_url && (
+                    <div className="bg-white rounded-2xl p-6 flex flex-col items-center">
+                      <img src={orderDetail.qr_code_url} alt="QR Code" className="w-44 h-44 rounded-xl" />
+                      <p className="mt-3 text-sm font-bold text-black tracking-widest">{orderDetail.booking_code}</p>
+                    </div>
+                  )}
+
+                  {/* Data table */}
+                  <div className="bg-[#1a1a1a] rounded-xl p-5 border border-zinc-800/50 space-y-4 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400">Mã đặt chỗ (Booking)</span>
+                      <span className="font-bold text-white">{orderDetail?.booking_code || selectedDetailTicket.id}</span>
+                    </div>
+                    <div className="w-full h-px bg-zinc-800 border-dashed" />
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400">Thời gian chiếu</span>
+                      <span className="font-medium text-white text-right">
+                        {selectedDetailTicket.showtime.time}<br />
+                        <span className="text-xs text-zinc-500">{selectedDetailTicket.showtime.date}</span>
                       </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400">
-                        <ScanLine className="w-3.5 h-3.5" /> Chưa check-in
-                      </span>
+                    </div>
+                    <div className="w-full h-px bg-zinc-800 border-dashed" />
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400">Rạp chiếu</span>
+                      <span className="font-medium text-white max-w-[200px] text-right line-clamp-2">{orderDetail?.cinema || selectedDetailTicket.showtime.cinema} – {orderDetail?.room || ''}</span>
+                    </div>
+                    <div className="w-full h-px bg-zinc-800 border-dashed" />
+                    <div className="flex justify-between items-center">
+                      <span className="text-zinc-400">Vị trí ghế</span>
+                      <span className="font-bold text-red-400">{(orderDetail?.seats || []).join(', ') || selectedDetailTicket.seats}</span>
+                    </div>
+                  </div>
+
+                  {/* Tickets / Check-in status */}
+                  {orderDetail?.tickets && orderDetail.tickets.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                        <Ticket className="h-4 w-4 text-red-500" />
+                        Trạng thái vé ({orderDetail.tickets.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {orderDetail.tickets.map((t, i) => (
+                          <div key={i} className="flex items-center justify-between bg-[#1a1a1a] border border-zinc-800 rounded-xl px-4 py-3">
+                            <span className="text-sm font-bold text-white font-mono">{orderDetail.seats?.[i] || `Ghế ${i + 1}`}</span>
+                            {t.status === 'CHECKED_IN' ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                                <ScanLine className="w-3.5 h-3.5" /> Đã check-in
+                              </span>
+                            ) : t.status === 'EXPIRED' ? (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-red-400">
+                                Hết hạn
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                                <ScanLine className="w-3.5 h-3.5" /> Chưa check-in
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Foods */}
+                  {orderDetail?.foods && orderDetail.foods.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                        <ShoppingBag className="h-4 w-4 text-amber-500" />
+                        Đồ ăn kèm ({orderDetail.foods.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {orderDetail.foods.map((f, i) => (
+                          <div key={i} className="flex items-center justify-between bg-[#1a1a1a] border border-zinc-800 rounded-xl px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              {f.image ? (
+                                <img src={f.image} alt={f.name} className="w-10 h-10 rounded-lg object-cover bg-zinc-800" />
+                              ) : (
+                                <span className="text-lg">🍿</span>
+                              )}
+                              <div>
+                                <p className="text-sm font-medium text-white">{f.name}</p>
+                                <p className="text-xs text-zinc-500">SL: {f.quantity} × {formatCurrency(f.price)}</p>
+                              </div>
+                            </div>
+                            <span className="text-sm font-bold text-white">{formatCurrency(f.total || f.price * f.quantity)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Payment info */}
+                  <div className="bg-[#1a1a1a] rounded-xl p-5 border border-zinc-800/50 space-y-3">
+                    <h4 className="text-white font-bold flex items-center gap-2">
+                      <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                      Thanh toán
+                    </h4>
+                    {orderDetail?.ticket_total != null && (
+                      <div className="flex justify-between text-sm text-zinc-400">
+                        <span>Vé ({orderDetail.ticket_quantity} vé)</span>
+                        <span className="text-white">{formatCurrency(orderDetail.ticket_total)}</span>
+                      </div>
                     )}
-                 </div>
-              </div>
-
-              {/* Payment info */}
-              <div className="space-y-3">
-                 <h4 className="text-white font-bold mb-3 flex items-center gap-2">
-                   <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                   Thanh toán
-                 </h4>
-                 <div className="flex justify-between text-sm text-zinc-400">
-                    <span>Trạng thái</span>
-                    <span className="text-green-500 font-semibold uppercase tracking-wider">Đã thanh toán</span>
-                 </div>
-                 <div className="flex justify-between text-lg font-black text-white mt-2">
-                    <span>Tổng cộng</span>
-                    <span className="text-red-500">{formatCurrency(selectedDetailTicket.totalPrice)}</span>
-                 </div>
-              </div>
-
+                    {orderDetail?.food_total > 0 && (
+                      <div className="flex justify-between text-sm text-zinc-400">
+                        <span>Đồ ăn kèm</span>
+                        <span className="text-white">{formatCurrency(orderDetail.food_total)}</span>
+                      </div>
+                    )}
+                    {orderDetail?.discount > 0 && (
+                      <div className="flex justify-between text-sm text-zinc-400">
+                        <span>Giảm giá</span>
+                        <span className="text-emerald-400">-{formatCurrency(orderDetail.discount)}</span>
+                      </div>
+                    )}
+                    <div className="w-full h-px bg-zinc-800" />
+                    <div className="flex justify-between text-lg font-black text-white">
+                      <span>Tổng cộng</span>
+                      <span className="text-red-500">{formatCurrency(orderDetail?.total_amount || selectedDetailTicket.totalPrice)}</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="p-4 bg-[#1a1a1a] border-t border-zinc-800">
-               <button onClick={() => setSelectedDetailTicket(null)} className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-bold transition-colors">
-                 Đóng chi tiết
-               </button>
+              <button onClick={() => { setSelectedDetailTicket(null); setOrderDetail(null); }} className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-bold transition-colors">
+                Đóng chi tiết
+              </button>
             </div>
           </div>
         </div>

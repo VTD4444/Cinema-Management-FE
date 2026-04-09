@@ -39,3 +39,10 @@ export const verifyOtp = (payload) => {
 export const resetPassword = (payload) => {
   return axiosClient.post('/auth/forgot-password/reset-password', payload);
 };
+
+/**
+ * Lấy thông tin người dùng hiện tại
+ */
+export const getMyInfo = () => {
+  return axiosClient.get('/auth/myInfo');
+};

@@ -25,7 +25,7 @@ const MovieCard = ({ movie }) => {
   const poster = Array.isArray(movie.poster_urls) ? movie.poster_urls[0] : null;
 
   return (
-    <div 
+    <div
       className="flex flex-col gap-3 group cursor-pointer"
       onClick={() => navigate(`/movie/${movie.id}`)}
     >
@@ -41,24 +41,21 @@ const MovieCard = ({ movie }) => {
             No image
           </div>
         )}
-        {/* Rating badge (Mock) */}
-        <div className="absolute top-2 right-2 flex items-center gap-1 bg-yellow-500/90 text-black px-2 py-0.5 rounded text-[10px] font-bold">
-          ★ {(Math.random() * (9.5 - 7.0) + 7.0).toFixed(1)}
-        </div>
+
       </div>
 
       <div className="flex flex-col gap-1">
         <h3 className="text-white font-bold text-base line-clamp-1">{movie.title}</h3>
         <div className="flex items-center justify-between text-xs text-zinc-400">
           <span className="bg-zinc-800 px-2 py-0.5 rounded text-[10px]">
-             {movie.genre_names?.[0] || 'Phim'}
+            {movie.genre_names?.[0] || 'Phim'}
           </span>
           <span className="flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
             {movie.duration ? `${Math.floor(movie.duration / 60)}h ${movie.duration % 60}m` : 'TBA'}
           </span>
         </div>
-        <button 
+        <button
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/movie/${movie.id}`);
@@ -79,7 +76,7 @@ const UserSearch = () => {
 
   const [searchInput, setSearchInput] = useState(initialQuery);
   const debouncedSearch = useDebounce(searchInput, 500);
-  
+
   const [movies, setMovies] = useState([]);
   const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState('');
@@ -108,7 +105,7 @@ const UserSearch = () => {
         pageNo: page,
         pageSize: 12,
       };
-      
+
       if (initialQuery) params.title = initialQuery;
       if (selectedGenre) params.genreId = selectedGenre;
       if (statusFilter) params.status = statusFilter;
@@ -116,17 +113,17 @@ const UserSearch = () => {
       const res = await getMoviesPublic(params);
       const items = res?.data?.items || res?.data || [];
       let total = res?.data?.totalItems || res?.data?.total || items.length;
-      
+
       let filtered = [...items];
 
       // Fallback local filtering in case backend doesn't filter correctly
       if (initialQuery) {
-        filtered = filtered.filter(m => 
+        filtered = filtered.filter(m =>
           m.title.toLowerCase().includes(initialQuery.toLowerCase())
         );
       }
       if (selectedGenre) {
-        filtered = filtered.filter(m => 
+        filtered = filtered.filter(m =>
           (m.genre_ids && m.genre_ids.some(id => id == selectedGenre)) ||
           (m.genres && m.genres.some(g => g.id == selectedGenre)) ||
           (m.genreIds && m.genreIds.some(id => id == selectedGenre))
@@ -140,7 +137,7 @@ const UserSearch = () => {
       if (filtered.length !== items.length) {
         total = filtered.length;
       }
-      
+
       setMovies(filtered);
       setTotalItems(total);
       setTotalPages(Math.ceil(total / 12) || 1);
@@ -175,14 +172,14 @@ const UserSearch = () => {
   return (
     <UserLayout>
       <div className="min-h-screen bg-[#0e0e0e] text-white">
-        
+
         {/* Search Header Banner */}
         <div className="pt-16 pb-12 px-6 flex flex-col items-center justify-center text-center border-b border-zinc-800">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Tìm kiếm phim</h1>
           <p className="text-zinc-400 text-sm md:text-base max-w-xl mb-8">
             Khám phá bộ sưu tập phim đa dạng, tìm rạp chiếu gần bạn và đặt vé ngay hôm nay.
           </p>
-          
+
           <div className="w-full max-w-2xl relative flex items-center">
             <div className="absolute left-4 text-zinc-400">
               <Search className="h-5 w-5" />
@@ -199,14 +196,14 @@ const UserSearch = () => {
 
         {/* Two Sidebar Layout */}
         <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-4 gap-10">
-          
+
           {/* LEFT SIDEBAR (FILTERS) */}
           <div className="lg:col-span-1 border-r border-zinc-800/50 pr-6 space-y-10">
             {/* Thể loại */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-base tracking-wide text-zinc-100">Thể loại</h3>
-                <button 
+                <button
                   onClick={() => setSelectedGenre('')}
                   className="text-[10px] uppercase font-bold text-red-500 hover:text-red-400"
                 >
@@ -241,10 +238,10 @@ const UserSearch = () => {
                 ].map((statusOption) => (
                   <label key={statusOption.id} className="flex items-center gap-3 cursor-pointer group">
                     <div className="relative flex items-center justify-center">
-                      <input 
-                        type="radio" 
-                        name="status" 
-                        className="peer sr-only" 
+                      <input
+                        type="radio"
+                        name="status"
+                        className="peer sr-only"
                         checked={statusFilter === statusOption.id}
                         onChange={() => { setStatusFilter(statusOption.id); setPage(1); }}
                       />
@@ -293,7 +290,7 @@ const UserSearch = () => {
             {/* Pagination */}
             {!loading && totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-12 bg-zinc-900/50 w-fit mx-auto p-1.5 rounded-full border border-zinc-800">
-                <button 
+                <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
                   className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent"
@@ -309,7 +306,7 @@ const UserSearch = () => {
                     {i + 1}
                   </button>
                 ))}
-                <button 
+                <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
                   className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent"

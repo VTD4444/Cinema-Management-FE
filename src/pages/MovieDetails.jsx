@@ -132,12 +132,12 @@ const MovieDetails = () => {
             String(d.getMonth() + 1).padStart(2, '0'),
             String(d.getDate()).padStart(2, '0')
           ].join('-');
-          
+
           return Object.values(newCache[dateStr]).some(groups => Object.keys(groups).length > 0);
         });
 
         setAvailableDates(validDates);
-        
+
         if (validDates.length > 0) {
           // If current selectedDate is not among valid ones, select the first valid
           const currentValid = validDates.find(vd => vd.getTime() === selectedDate.getTime());
@@ -203,27 +203,20 @@ const MovieDetails = () => {
               <img src={poster} alt={movie.title} className="w-full h-full object-cover" />
             </div>
           )}
-          
+
           {/* Info Details */}
           <div className="flex-1 flex flex-col justify-center">
             <div className="flex gap-2 mb-4">
               <span className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-sm ${statusInfo.color}`}>
                 {statusInfo.text}
               </span>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-sm bg-zinc-800 text-white">
-                IMAX
-              </span>
             </div>
-            
+
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 line-clamp-2 leading-tight">
               {movie.title}
             </h1>
-            
+
             <div className="flex flex-wrap items-center gap-6 text-sm font-medium mb-8">
-              <div className="flex items-center gap-1.5 text-yellow-500">
-                <Star className="w-5 h-5 fill-current" />
-                <span className="text-white text-base">8.9</span>
-              </div>
               <div className="flex items-center gap-1.5">
                 <Clock className="w-5 h-5" />
                 <span>{Math.floor((movie.duration || 0) / 60)}h {(movie.duration || 0) % 60}m</span>
@@ -243,7 +236,7 @@ const MovieDetails = () => {
                 <h3 className="text-zinc-400 text-sm font-medium mb-2 uppercase tracking-wider">Nội dung</h3>
                 <p className="text-zinc-200 leading-relaxed text-[15px]">{movie.description || 'Chưa có thông tin.'}</p>
               </div>
-              
+
               <div className="flex gap-16">
                 <div>
                   <h3 className="text-zinc-400 text-sm font-medium mb-1 uppercase tracking-wider">Đạo diễn</h3>
@@ -368,8 +361,8 @@ const MovieDetails = () => {
                               }
 
                               return (
-                                <button 
-                                  key={st.id} 
+                                <button
+                                  key={st.id}
                                   onClick={() => navigate(`/booking/${st.id}`, { state: { movie, cinema, time: timeLabel, base_price: st.base_price } })}
                                   className="flex items-center justify-center w-20 py-2.5 bg-[#0e0e0e] hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 rounded-xl transition-colors group"
                                 >
@@ -393,18 +386,18 @@ const MovieDetails = () => {
             <div className="w-1.5 h-8 bg-red-600 rounded-full"></div>
             <h2 className="text-2xl font-bold text-white tracking-tight">Trailer</h2>
           </div>
-          
+
           <div className="max-w-4xl mx-auto">
             {movie.trailer_url ? (
               isPlayingTrailer ? (
                 <div className="rounded-2xl overflow-hidden border border-zinc-800 aspect-video relative bg-black">
-                  <iframe 
-                    width="100%" 
-                    height="100%" 
-                    src={getYoutubeEmbedUrl(movie.trailer_url)} 
-                    title="YouTube video player" 
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={getYoutubeEmbedUrl(movie.trailer_url)}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     className="absolute top-0 left-0 w-full h-full"
                   ></iframe>
@@ -414,7 +407,7 @@ const MovieDetails = () => {
                   <img src={movie.backdrop_url || backdrop} alt="Trailer" className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/40 group-hover:scale-110 transition-transform">
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 ml-1"><path d="M5 3l14 9-14 9V3z"/></svg>
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 ml-1"><path d="M5 3l14 9-14 9V3z" /></svg>
                     </div>
                   </div>
                   <div className="absolute bottom-5 left-5 right-5 font-bold justify-between flex text-lg text-white">

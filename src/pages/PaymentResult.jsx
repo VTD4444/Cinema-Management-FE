@@ -19,11 +19,11 @@ const PaymentResult = () => {
   const [errorMsg, setErrorMsg] = useState('');
 
   // Thông tin hiển thị từ VNPay params
-  const txnRef    = searchParams.get('vnp_TxnRef');
-  const bankCode  = searchParams.get('vnp_BankCode');
-  const amount    = searchParams.get('vnp_Amount');
+  const txnRef = searchParams.get('vnp_TxnRef');
+  const bankCode = searchParams.get('vnp_BankCode');
+  const amount = searchParams.get('vnp_Amount');
   const bankTranNo = searchParams.get('vnp_BankTranNo');
-  const payDate   = searchParams.get('vnp_PayDate'); // YYYYMMDDHHmmss
+  const payDate = searchParams.get('vnp_PayDate'); // YYYYMMDDHHmmss
 
   const formatPayDate = (raw) => {
     if (!raw || raw.length < 14) return null;
@@ -108,7 +108,7 @@ const PaymentResult = () => {
               </div>
 
               <h1 className="text-3xl font-black text-white mb-1 uppercase tracking-wide flex items-center gap-2">
-                Thanh toán thành công <span>🎉</span>
+                Thanh toán thành công <span></span>
               </h1>
               <p className="text-green-500 font-medium mb-8 text-sm">Chúc bạn xem phim vui vẻ! Hẹn gặp lại tại rạp.</p>
 

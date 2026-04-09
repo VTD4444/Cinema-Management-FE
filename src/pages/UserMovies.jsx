@@ -127,11 +127,10 @@ const UserMovies = () => {
                 key={t.key}
                 type="button"
                 onClick={() => setTab(t.key)}
-                className={`pb-1 text-sm transition-colors ${
-                  tab === t.key
+                className={`pb-1 text-sm transition-colors ${tab === t.key
                     ? 'border-b border-primary font-semibold text-primary'
                     : 'text-zinc-400 hover:text-zinc-200'
-                }`}
+                  }`}
               >
                 {t.label}
               </button>
@@ -177,7 +176,7 @@ const UserMovies = () => {
                 const poster = posterFromMovie(movie);
                 return (
                   <article key={movie.id} className="overflow-hidden rounded-lg border border-zinc-900 bg-zinc-950">
-                    <Link to={`/movies/${movie.id}`} className="block aspect-[3/4] overflow-hidden bg-zinc-900">
+                    <Link to={`/movie/${movie.id}`} className="block aspect-[3/4] overflow-hidden bg-zinc-900">
                       {poster ? (
                         <img src={poster} alt={movie.title} className="h-full w-full object-cover" />
                       ) : (
@@ -187,7 +186,7 @@ const UserMovies = () => {
                       )}
                     </Link>
                     <div className="space-y-2 p-3">
-                      <Link to={`/movies/${movie.id}`}>
+                      <Link to={`/movie/${movie.id}`}>
                         <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-zinc-100 hover:text-white">
                           {movie.title}
                         </h3>
@@ -199,7 +198,7 @@ const UserMovies = () => {
                         </span>
                         <span>{movie.release_date ? new Date(movie.release_date).toLocaleDateString('vi-VN') : ''}</span>
                       </div>
-                      <Link to={`/movies/${movie.id}`}>
+                      <Link to={`/movie/${movie.id}`}>
                         <Button className="mt-1 h-8 w-full rounded-md bg-primary text-xs font-semibold hover:bg-primary-hover">
                           Chi tiết phim
                         </Button>
@@ -228,11 +227,10 @@ const UserMovies = () => {
                   key={num}
                   type="button"
                   onClick={() => setPage(num)}
-                  className={`h-8 min-w-8 rounded border px-2 text-xs ${
-                    active
+                  className={`h-8 min-w-8 rounded border px-2 text-xs ${active
                       ? 'border-primary bg-primary text-white'
                       : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200'
-                  }`}
+                    }`}
                 >
                   {num}
                 </button>

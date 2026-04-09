@@ -18,6 +18,9 @@ const useAuthStore = create(
         localStorage.removeItem('userRole');
         set({ user: null, isAuthenticated: false });
       },
+      updateUser: (userData) => {
+        set({ user: userData });
+      },
     }),
     {
       name: 'auth-storage', // name of the item in the storage (must be unique)
