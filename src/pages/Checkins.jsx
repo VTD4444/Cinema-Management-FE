@@ -5,8 +5,8 @@ import { checkInByBookingCode, getCheckinHistory } from '../api/orderApi';
 
 const STATUS_CONFIG = {
   CHECKED_IN: { label: 'Đã Check-in', color: 'text-emerald-500', bg: 'bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-500' },
-  PENDING:    { label: 'Chờ xử lý',   color: 'text-amber-500',   bg: 'bg-amber-500/10 border-amber-500/20',   dot: 'bg-amber-500' },
-  EXPIRED:    { label: 'Hết hạn',     color: 'text-red-500',     bg: 'bg-red-500/10 border-red-500/20',       dot: 'bg-red-500' },
+  PENDING: { label: 'Chờ xử lý', color: 'text-amber-500', bg: 'bg-amber-500/10 border-amber-500/20', dot: 'bg-amber-500' },
+  EXPIRED: { label: 'Hết hạn', color: 'text-red-500', bg: 'bg-red-500/10 border-red-500/20', dot: 'bg-red-500' },
 };
 
 const StatusBadge = ({ status }) => {
@@ -128,11 +128,10 @@ const Checkins = () => {
 
         {/* Result toast */}
         {checkResult && (
-          <div className={`flex items-start gap-3 p-4 rounded-xl border text-sm font-medium animate-in slide-in-from-top-2 duration-200 ${
-            checkResult.success
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-              : 'bg-red-500/10 border-red-500/30 text-red-400'
-          }`}>
+          <div className={`flex items-start gap-3 p-4 rounded-xl border text-sm font-medium animate-in slide-in-from-top-2 duration-200 ${checkResult.success
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+            : 'bg-red-500/10 border-red-500/30 text-red-400'
+            }`}>
             {checkResult.success
               ? <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
               : <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
@@ -189,8 +188,6 @@ const Checkins = () => {
                   <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-11">Booking Code</TableHead>
                   <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-11">Khách hàng</TableHead>
                   <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-11">Phim / Suất</TableHead>
-                  <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-11">Ghế</TableHead>
-                  <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider h-11">Thời gian check-in</TableHead>
                   <TableHead className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider pr-6 text-right h-11">Trạng thái</TableHead>
                 </TableRow>
               </TableHeader>
@@ -205,8 +202,8 @@ const Checkins = () => {
                     </TableCell>
                     <TableCell className="py-3">
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-zinc-200">{item.user?.name || item.customer_name || '—'}</span>
-                        {item.user?.email && <span className="text-xs text-zinc-500">{item.user.email}</span>}
+                        <span className="text-sm font-semibold text-zinc-200">{item.customer?.name || '—'}</span>
+                        {item.customer?.email && <span className="text-xs text-zinc-500">{item.customer.email}</span>}
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
@@ -215,14 +212,8 @@ const Checkins = () => {
                         <span className="text-xs text-zinc-500">{item.showtime ? formatDateTime(item.showtime) : (item.room || '—')}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="py-3">
-                      <span className="font-mono text-xs font-bold text-white bg-zinc-800 px-2 py-1 rounded">{item.seat_code || item.seat || '—'}</span>
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <span className="text-xs font-mono text-zinc-500">{formatDateTime(item.checked_in_at || item.updated_at)}</span>
-                    </TableCell>
                     <TableCell className="pr-6 py-3 text-right">
-                      <StatusBadge status={item.ticket_status || item.status || 'PENDING'} />
+                      <StatusBadge status={item.tickets[0].ticket_status || item.status || 'PENDING'} />
                     </TableCell>
                   </TableRow>
                 ))}

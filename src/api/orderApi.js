@@ -48,3 +48,11 @@ export const getCheckinHistory = (params) => {
 export const getAdminOrders = (params) => {
   return axiosClient.get('/orders/admin', { params });
 };
+
+/**
+ * Lấy chi tiết một đơn hàng theo order_id
+ * @param {number|string} orderId
+ */
+export const getOrderDetail = (orderId) => {
+  return axiosClient.get(`/orders/${orderId}`);
+};

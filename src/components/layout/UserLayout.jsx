@@ -1,10 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Search, User, UserCircle, Ticket, CalendarDays } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, User, UserCircle, Ticket, CalendarDays, LogOut } from 'lucide-react';
+import UserFooter from './UserFooter';
+import useAuthStore from '../../store/useAuthStore';
+import { getMyInfo } from '../../api/authApi';
 
 const UserHeader = () => {
+  const { user, isAuthenticated, logout, updateUser } = useAuthStore();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Fetch updated user info to get the latest full_name, etc.
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token && isAuthenticated) {
+      getMyInfo()
+        .then(res => {
+          if (res?.data?.user) {
+            updateUser(res.data.user);
+          }
+        })
+        .catch(err => console.error('Failed to fetch user info', err));
+    }
+  }, [isAuthenticated, updateUser]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -18,25 +36,10 @@ const UserHeader = () => {
   }, []);
 
   return (
-    <header className="flex items-center justify-between px-10 py-4 text-sm text-zinc-100 relative z-50">
+    <header className="sticky top-0 z-50 flex items-center justify-between px-10 py-4 text-sm text-zinc-100 border-b border-zinc-800/70 bg-[#0e0e0e]/90 backdrop-blur-md">
       <Link to="/home" className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-6 w-6 text-white"
-          >
-            <rect width="18" height="18" x="3" y="3" rx="2" />
-            <path d="M7 3v18" />
-            <path d="M17 3v18" />
-            <path d="M3 9h18" />
-            <path d="M3 15h18" />
-          </svg>
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <img src="/logo.png" alt="CineGo logo" className="h-7 w-7 object-contain" />
         </div>
         <div>
           <h1 className="text-lg font-bold text-white tracking-tight leading-none">CineGo</h1>
@@ -46,8 +49,8 @@ const UserHeader = () => {
         </div>
       </Link>
       <nav className="flex items-center gap-6 text-zinc-300">
-        <button className="hover:text-white">Phim</button>
-        <button className="hover:text-white">Rạp</button>
+        <Link to="/movies" className="hover:text-white">Phim</Link>
+        <Link to="/search" className="hover:text-white">Rạp</Link>
         <Link to="/about" className="hover:text-white">Về chúng tôi</Link>
       </nav>
       <div className="flex items-center gap-5">
@@ -55,60 +58,78 @@ const UserHeader = () => {
           <Search className="h-5 w-5" />
         </Link>
         <div className="relative" ref={dropdownRef}>
-          <button 
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors"
-          >
-            <User className="h-4 w-4" />
-          </button>
-          
-          {/* Dropdown Menu */}
-          {isProfileOpen && (
-            <div className="absolute right-0 mt-3 w-56 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl overflow-hidden py-2" style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
-              <Link 
-                to="/profile" 
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
-                onClick={() => setIsProfileOpen(false)}
+          {isAuthenticated ? (
+            <>
+              <button 
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-800/50 px-3 py-1.5 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors"
               >
-                <UserCircle className="w-4 h-4" />
-                <span>Thông tin cá nhân</span>
-              </Link>
-              <Link 
-                to="/my-vouchers" 
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
-                onClick={() => setIsProfileOpen(false)}
-              >
-                <Ticket className="w-4 h-4" />
-                <span>Voucher của tôi</span>
-              </Link>
-              <Link 
-                to="/my-tickets" 
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
-                onClick={() => setIsProfileOpen(false)}
-              >
-                <CalendarDays className="w-4 h-4" />
-                <span>Vé của tôi</span>
-              </Link>
-            </div>
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-700 text-white">
+                  <User className="h-3.5 w-3.5" />
+                </div>
+                <span className="text-sm font-medium truncate max-w-[120px] text-left">
+                  {user?.full_name || 'Người dùng'}
+                </span>
+              </button>
+              
+              {/* Dropdown Menu */}
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-3 w-56 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl overflow-hidden py-2" style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
+                  <div className="px-4 py-3 border-b border-zinc-800">
+                    <p className="text-sm font-medium text-white line-clamp-1">{user?.full_name || 'Người dùng'}</p>
+                    <p className="text-xs text-zinc-400 line-clamp-1">{user?.email}</p>
+                  </div>
+                  <Link 
+                    to="/profile" 
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    <UserCircle className="w-4 h-4" />
+                    <span>Thông tin cá nhân</span>
+                  </Link>
+                  <Link 
+                    to="/my-vouchers" 
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    <Ticket className="w-4 h-4" />
+                    <span>Voucher của tôi</span>
+                  </Link>
+                  <Link 
+                    to="/my-tickets" 
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    <span>Vé của tôi</span>
+                  </Link>
+                  <div className="border-t border-zinc-800 mt-1">
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsProfileOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Đăng xuất</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <Link 
+              to="/login"
+              className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full border border-zinc-700 bg-zinc-800/50 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors"
+            >
+              <User className="h-4 w-4" />
+              <span>Đăng nhập / Đăng ký</span>
+            </Link>
           )}
         </div>
       </div>
     </header>
-  );
-};
-
-const UserFooter = () => {
-  return (
-    <footer className="border-t border-zinc-800 py-6 px-10 text-xs text-zinc-500">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <span>© {new Date().getFullYear()} CinemaPlus. All rights reserved.</span>
-        <div className="flex gap-4">
-          <button className="hover:text-zinc-300">Privacy</button>
-          <button className="hover:text-zinc-300">Terms</button>
-          <button className="hover:text-zinc-300">Sitemap</button>
-        </div>
-      </div>
-    </footer>
   );
 };
 
