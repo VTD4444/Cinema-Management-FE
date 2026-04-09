@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, User, UserCircle, Ticket, CalendarDays } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, User, UserCircle, Ticket, CalendarDays, LogOut } from 'lucide-react';
+import useAuthStore from '../../store/useAuthStore';
 import UserFooter from './UserFooter';
 
 const UserHeader = () => {
+  const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -17,6 +20,12 @@ const UserHeader = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    setIsProfileOpen(false);
+    navigate('/login');
+  };
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between px-10 py-4 text-sm text-zinc-100 border-b border-zinc-800/70 bg-[#0e0e0e]/90 backdrop-blur-md">
@@ -33,7 +42,7 @@ const UserHeader = () => {
       </Link>
       <nav className="flex items-center gap-6 text-zinc-300">
         <Link to="/movies" className="hover:text-white">Phim</Link>
-        <Link to="/search" className="hover:text-white">Rạp</Link>
+        <Link to="/cinemas" className="hover:text-white">Rạp</Link>
         <Link to="/about" className="hover:text-white">Về chúng tôi</Link>
       </nav>
       <div className="flex items-center gap-5">
@@ -75,6 +84,14 @@ const UserHeader = () => {
                 <CalendarDays className="w-4 h-4" />
                 <span>Vé của tôi</span>
               </Link>
+              <button
+                type="button"
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Đăng xuất</span>
+              </button>
             </div>
           )}
         </div>

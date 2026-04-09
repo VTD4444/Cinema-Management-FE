@@ -24,11 +24,16 @@ import UserForgotPassword from './pages/UserForgotPassword';
 import UserHome from './pages/UserHome';
 import UserMovies from './pages/UserMovies';
 import UserMovieDetail from './pages/UserMovieDetail';
+import UserCinemaSystem from './pages/UserCinemaSystem';
 import UserSearch from './pages/UserSearch';
 import Profile from './pages/Profile';
 import MyVouchers from './pages/MyVouchers';
 import MyTickets from './pages/MyTickets';
 import AboutUs from './pages/AboutUs';
+import MovieDetails from './pages/MovieDetails';
+import SeatSelection from './pages/SeatSelection';
+import OrderSummary from './pages/OrderSummary';
+import PaymentResult from './pages/PaymentResult';
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -62,9 +67,17 @@ const AdminRootRedirect = () => {
 };
 
 const UserRootRedirect = () => {
-  const hasUserToken = typeof window !== 'undefined' && localStorage.getItem('userAccessToken');
+  const hasToken = typeof window !== 'undefined' && localStorage.getItem('accessToken');
 
-  if (hasUserToken) {
+  // Nếu VNPay redirect về "/" với params thanh toán → chuyển sang trang kết quả
+  if (typeof window !== 'undefined') {
+    const search = window.location.search;
+    if (search.includes('vnp_ResponseCode')) {
+      return <Navigate to={`/payment-result${search}`} replace />;
+    }
+  }
+
+  if (hasToken) {
     return <Navigate to="/home" replace />;
   }
 
@@ -77,8 +90,13 @@ function App() {
       {/* User-facing routes */}
       <Route path="/" element={<UserRootRedirect />} />
       <Route path="/home" element={<UserHome />} />
+      {/* <Route path="/movie/:id" element={<MovieDetails />} /> */}
+      <Route path="/booking/:showtimeId" element={<SeatSelection />} />
+      <Route path="/booking/:showtimeId/summary" element={<OrderSummary />} />
+      <Route path="/payment-result" element={<PaymentResult />} />
       <Route path="/movies" element={<UserMovies />} />
       <Route path="/movies/:id" element={<UserMovieDetail />} />
+      <Route path="/cinemas" element={<UserCinemaSystem />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/search" element={<UserSearch />} />
       <Route path="/profile" element={<Profile />} />

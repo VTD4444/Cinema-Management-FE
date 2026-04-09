@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input, Button } from '../components/ui';
 import { register } from '../api/authApi';
+import useAuthStore from '../store/useAuthStore';
 
 const UserRegister = () => {
   const navigate = useNavigate();
+  const authLogin = useAuthStore((state) => state.login);
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -34,8 +36,11 @@ const UserRegister = () => {
     try {
       const res = await register(formData);
       const token = res?.data?.accessToken;
+      const user = res?.data?.user;
+
       if (token) {
-        localStorage.setItem('userAccessToken', token);
+        localStorage.setItem('accessToken', token);
+        authLogin(user, token); // Update global state
         navigate('/home');
       } else {
         navigate('/login');

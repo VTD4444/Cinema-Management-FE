@@ -25,6 +25,13 @@ export const getCities = (params = {}) => {
 };
 
 /**
+ * Lấy danh sách tỉnh/thành phố cho User (chỉ active / danh sách cơ bản)
+ */
+export const getCitiesPublic = (params = {}) => {
+  return axiosClient.get(CITIES_BASE, { params });
+};
+
+/**
  * Lấy chi tiết một tỉnh/thành phố
  * @param {number|string} id
  */

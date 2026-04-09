@@ -1,50 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import UserLayout from '../components/layout/UserLayout';
-import { Ticket, Coffee, Gift, CalendarX } from 'lucide-react';
-
-const MOCK_VOUCHERS = [
-  {
-    id: 1,
-    type: 'food',
-    status: 'unused',
-    category: 'ẨM THỰC',
-    title: 'Giảm 50% bắp nước',
-    description: 'Áp dụng cho combo 2 bắp 1 nước tại quầy.',
-    expiryDate: '31/12/2023',
-    code: 'CP-FREE-POP'
-  },
-  {
-    id: 2,
-    type: 'ticket',
-    status: 'unused',
-    category: 'VÉ XEM PHIM',
-    title: 'Giảm 30.000đ vé xem phim',
-    description: 'Áp dụng cho tất cả các suất chiếu 2D vào cuối tuần.',
-    expiryDate: '25/12/2023',
-    code: 'CP-SAVE-30K'
-  },
-  {
-    id: 3,
-    type: 'gift',
-    status: 'used',
-    category: 'QUÀ TẶNG',
-    title: 'Tặng 1 vé xem phim miễn phí',
-    description: 'Áp dụng cho thành viên hạng Vàng vào ngày sinh nhật.',
-    expiryDate: '15/10/2023',
-    code: 'CP-BDAY-GIFT',
-    usedDate: '12/10'
-  },
-  {
-    id: 4,
-    type: 'event',
-    status: 'expired',
-    category: 'SỰ KIỆN',
-    title: 'Ưu đãi Halloween',
-    description: 'Giảm 20% cho các phim kinh dị trong tuần Halloween.',
-    expiryDate: '31/10/2023',
-    code: 'CP-HALO-20'
-  }
-];
+import { Ticket, Coffee, Gift, CalendarX, Loader2 } from 'lucide-react';
+import { getMyVouchers } from '../api/voucherApi';
 
 const VoucherCard = ({ voucher }) => {
   const isUsed = voucher.status === 'used';
@@ -149,6 +106,60 @@ const VoucherCard = ({ voucher }) => {
 
 const MyVouchers = () => {
   const [activeTab, setActiveTab] = useState('all');
+  const [vouchers, setVouchers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchMyVouchers = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await getMyVouchers();
+      const items = res?.data?.items || res?.data || [];
+      
+      const mapped = items.map(apiItem => {
+        // Decode nested structure (e.g. { id, status, used_at, voucher: { ... } }) or flat structure
+        const v = apiItem.voucher || apiItem;
+        
+        let mappedStatus = 'unused';
+        const isUsed = apiItem.status === 'USED' || apiItem.is_used || v.is_used;
+        
+        if (isUsed) {
+          mappedStatus = 'used';
+        } else {
+          // Calculate expiration based on end_date
+          const end = new Date(v.end_date || v.expiryDate || '2099-12-31');
+          if (end < new Date()) {
+            mappedStatus = 'expired';
+          }
+        }
+
+        // Return unified object for the Card UI
+        return {
+          id: apiItem.id || v.id,
+          type: v.type?.toLowerCase() || 'ticket',
+          status: mappedStatus,
+          category: v.category || (v.type === 'PERCENTAGE' ? 'GIẢM GIÁ' : 'VOUCHER'),
+          title: v.name || v.title || (v.value ? `Giảm ${v.value}` : 'Voucher Ưu Đãi'),
+          description: v.description || 'Áp dụng cho các dịch vụ tại rạp chiếu phim',
+          expiryDate: v.end_date ? new Date(v.end_date).toLocaleDateString('vi-VN') : 'KXĐ',
+          code: v.code || 'NO-CODE',
+          usedDate: apiItem.used_at ? new Date(apiItem.used_at).toLocaleDateString('vi-VN') : undefined
+        };
+      });
+
+      setVouchers(mapped);
+    } catch (err) {
+      console.error('Failed to fetch user vouchers:', err);
+      setError('Không thể tải danh sách voucher.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyVouchers();
+  }, []);
 
   const tabs = [
     { id: 'all', label: 'Tất cả' },
@@ -157,7 +168,7 @@ const MyVouchers = () => {
     { id: 'expired', label: 'Hết hạn' }
   ];
 
-  const filteredVouchers = MOCK_VOUCHERS.filter(v => activeTab === 'all' || v.status === activeTab);
+  const filteredVouchers = vouchers.filter(v => activeTab === 'all' || v.status === activeTab);
 
   return (
     <UserLayout>
@@ -185,7 +196,16 @@ const MyVouchers = () => {
 
           {/* List */}
           <div className="space-y-4">
-            {filteredVouchers.length > 0 ? (
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
+                <Loader2 className="w-8 h-8 animate-spin mb-4" />
+                <p>Đang tải danh sách voucher...</p>
+              </div>
+            ) : error ? (
+              <div className="py-20 text-center text-red-500 bg-red-950/20 rounded-2xl border border-red-900/30">
+                {error}
+              </div>
+            ) : filteredVouchers.length > 0 ? (
               filteredVouchers.map(v => (
                 <VoucherCard key={v.id} voucher={v} />
               ))
