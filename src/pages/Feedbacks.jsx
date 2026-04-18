@@ -144,16 +144,7 @@ const Feedbacks = () => {
                 </h2>
             </div>
 
-            {/* Controls */}
-            <div className="flex flex-col gap-4 md:flex-row md:items-center justify-between">
-                <div className="relative w-full md:w-96">
-                    <Input
-                        placeholder="Tìm kiếm người gửi, email hoặc chủ đề..."
-                        className="pl-10 bg-zinc-900/50 border-zinc-800 rounded-full h-11"
-                    />
-                    <Search className="absolute left-3.5 top-3 h-5 w-5 text-gray-400" />
-                </div>
-            </div>
+
 
             {/* Data Table */}
             <div className="rounded-xl border border-border bg-surface/30 flex flex-col overflow-hidden shadow-sm">
@@ -226,7 +217,7 @@ const Feedbacks = () => {
                                                                 <Reply className="h-4 w-4" />
                                                             </button>
                                                         )}
-                                                        {status === 'PROCESSING' && (
+                                                        {status !== 'RESOLVED' && (
                                                             <button
                                                                 onClick={() => handleResolve(item.id)}
                                                                 className="p-1.5 hover:text-emerald-400 transition-colors border border-transparent hover:bg-zinc-800 rounded-md"
@@ -342,12 +333,12 @@ const Feedbacks = () => {
                                     >
                                         <Reply className="h-4 w-4" /> Phản hồi
                                     </Button>
-                                    {viewContact.status?.toUpperCase() === 'PROCESSING' && (
+                                    {viewContact.status?.toUpperCase() !== 'RESOLVED' && (
                                         <Button
                                             onClick={() => { handleResolve(viewContact.id); setViewContact(null); }}
                                             className="rounded-full px-5 h-9 gap-2 bg-emerald-600 hover:bg-emerald-500"
                                         >
-                                            <CheckCircle className="h-4 w-4" /> Đã giải quyết
+                                            <CheckCircle className="h-4 w-4" /> Đánh dấu giải quyết
                                         </Button>
                                     )}
                                 </>

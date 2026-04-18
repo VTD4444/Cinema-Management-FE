@@ -48,10 +48,11 @@ const UserHeader = () => {
           </p>
         </div>
       </Link>
-      <nav className="flex items-center gap-6 text-zinc-300">
-        <Link to="/movies" className="hover:text-white">Phim</Link>
-        <Link to="/search" className="hover:text-white">Rạp</Link>
-        <Link to="/about" className="hover:text-white">Về chúng tôi</Link>
+      <nav className="flex items-center gap-6 text-zinc-300 transition-colors">
+        <Link to="/movies" className="hover:text-white font-medium">Phim</Link>
+        <Link to="/search" className="hover:text-white font-medium">Rạp</Link>
+        <Link to="/about" className="hover:text-white font-medium">About</Link>
+        <Link to="/contact" className="text-red-500 font-bold hover:text-red-400 transition-colors">Trung tâm hỗ trợ</Link>
       </nav>
       <div className="flex items-center gap-5">
         <Link to="/search" className="text-zinc-300 hover:text-white transition-colors">
