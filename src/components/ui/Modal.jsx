@@ -31,7 +31,7 @@ export const Modal = ({ isOpen, onClose, title, children, className }) => {
       )}
       onClose={onClose}
     >
-      <div className="flex h-full flex-col">
+      <div className="flex h-full min-h-0 flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4">
           <h2 className="text-lg font-semibold">{title}</h2>
@@ -45,7 +45,7 @@ export const Modal = ({ isOpen, onClose, title, children, className }) => {
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto p-4 sm:p-6">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>
     </dialog>
   );

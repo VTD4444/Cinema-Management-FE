@@ -187,9 +187,6 @@ const UserHome = () => {
                   <Button className="h-9 rounded-md bg-primary px-4 text-xs font-semibold" onClick={() => heroMovie && navigate(`/movie/${heroMovie.id}`)}>
                     Đặt Vé Ngay
                   </Button>
-                  <Button variant="secondary" className="h-9 rounded-md px-4 text-xs font-semibold" onClick={() => heroMovie && navigate(`/movie/${heroMovie.id}`)}>
-                    Xem Info
-                  </Button>
                 </div>
               </div>
             </div>
