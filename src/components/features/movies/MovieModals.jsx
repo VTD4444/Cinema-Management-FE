@@ -78,7 +78,7 @@ const MovieModals = ({ state, onClose, onSuccess }) => {
       });
     }
     setError('');
-  }, [state.type, state.data]);
+  }, [state.type, data]);
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

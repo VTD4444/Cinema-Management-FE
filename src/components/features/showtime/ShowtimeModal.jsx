@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Input, Button, Select } from '../../ui';
 import { Plus, X, Clock } from 'lucide-react';
-import { getMoviesPublic } from '../../../api/movieApi';
+import { getMovies } from '../../../api/movieApi';
 import { getCities } from '../../../api/cityApi';
 import { getCinemas } from '../../../api/cinemaApi';
 import { getRooms } from '../../../api/roomApi';
 import { createShowtime, updateShowtime, deleteShowtime } from '../../../api/showtimeApi';
+
+const getMovieItemsFromResponse = (res) => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.items)) return res.items;
+  if (Array.isArray(res?.data?.items)) return res.data.items;
+  if (Array.isArray(res?.data?.data?.items)) return res.data.data.items;
+  if (Array.isArray(res?.data)) return res.data;
+  return [];
+};
 
 const ShowtimeModal = ({ state, onClose, onSuccess }) => {
   const [cities, setCities] = useState([]);
@@ -46,12 +55,12 @@ const ShowtimeModal = ({ state, onClose, onSuccess }) => {
         })
         .catch(() => setCinemas([]));
 
-      getMoviesPublic({ pageSize: 100 })
+      getMovies({ pageNo: 1, pageSize: 200 })
         .then((res) => {
-          const items = res?.data?.items || res?.data || [];
+          const items = getMovieItemsFromResponse(res);
           const validStatuses = ['SHOWING', 'COMING_SOON'];
-          const filteredItems = Array.isArray(items) 
-             ? items.filter(m => validStatuses.includes(m.status)) 
+          const filteredItems = Array.isArray(items)
+             ? items.filter((m) => validStatuses.includes(String(m?.status || '').toUpperCase()))
              : [];
           setMovies(filteredItems);
         })
@@ -124,7 +133,7 @@ const ShowtimeModal = ({ state, onClose, onSuccess }) => {
       if (state?.cinemaId) setSelectedCinemaId(String(state.cinemaId));
     }
     setError('');
-  }, [state?.type, data]);
+  }, [state?.type, data, state?.cityId, state?.cinemaId, state?.defaultDate]);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));

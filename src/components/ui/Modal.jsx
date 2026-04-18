@@ -23,16 +23,17 @@ export const Modal = ({ isOpen, onClose, title, children, className }) => {
       ref={dialogRef}
       className={cn(
         'backdrop:bg-black/60 backdrop:backdrop-blur-sm',
-        'bg-surface text-white rounded-lg shadow-xl shadow-black/50 p-0 overflow-hidden',
-        'w-full max-w-lg m-auto',
+        'bg-surface text-white shadow-xl shadow-black/50 overflow-hidden p-0',
+        'm-auto w-full max-w-lg rounded-t-2xl rounded-b-none sm:rounded-lg',
+        'max-h-[92vh] sm:max-h-[85vh]',
         'open:animate-in open:fade-in-0 open:zoom-in-95',
         className
       )}
       onClose={onClose}
     >
-      <div className="flex flex-col h-full">
+      <div className="flex h-full flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4">
           <h2 className="text-lg font-semibold">{title}</h2>
           <button
             onClick={onClose}
@@ -44,7 +45,7 @@ export const Modal = ({ isOpen, onClose, title, children, className }) => {
         </div>
 
         {/* Content */}
-        <div className="p-6">{children}</div>
+        <div className="overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>
     </dialog>
   );

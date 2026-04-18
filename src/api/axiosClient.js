@@ -34,9 +34,24 @@ axiosClient.interceptors.response.use(
   (error) => {
     // any status code outside 2xx
     if (error.response && error.response.status === 401) {
-      // Handle unauthorized error (logout user, redirect to login page)
+      // Handle unauthorized error and redirect based on current route context
       localStorage.removeItem('accessToken');
-      window.location.href = '/admin/login'; // Redirect về trang login admin
+      localStorage.removeItem('userRole');
+
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      const isAdminArea = currentPath.startsWith('/admin');
+
+      // Avoid redirect loops when already on login pages
+      const isAlreadyOnAdminLogin = currentPath === '/admin/login';
+      const isAlreadyOnUserLogin = currentPath === '/login';
+
+      if (isAdminArea) {
+        if (!isAlreadyOnAdminLogin) {
+          window.location.href = '/admin/login';
+        }
+      } else if (!isAlreadyOnUserLogin) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

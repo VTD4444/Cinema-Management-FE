@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Search,
     Plus,
-    Filter,
-    Download,
     Package,
     CheckCircle2,
     AlertCircle,
@@ -16,7 +13,6 @@ import { getFoodsAdmin } from '../api/foodApi';
 import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 const Foods = () => {
-    const [activeTab, setActiveTab] = useState('Tất cả');
     const [foods, setFoods] = useState([]);
     const [loading, setLoading] = useState(false);
     const [pageNo, setPageNo] = useState(1);

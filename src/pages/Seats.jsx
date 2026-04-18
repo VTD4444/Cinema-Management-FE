@@ -47,6 +47,7 @@ const Seats = () => {
   const [loading, setLoading] = useState(true);
   const [modalState, setModalState] = useState({ type: null, data: null });
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [statsData, setStatsData] = useState({ total: 0, standard: 0, vip: 0, couple: 0 });
 
   const fetchRooms = useCallback(() => {
     getRooms({ pageNo: 1, pageSize: 500 })
@@ -108,8 +109,6 @@ const Seats = () => {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const start = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const end = Math.min(page * PAGE_SIZE, total);
-
-  const [statsData, setStatsData] = useState({ total: 0, standard: 0, vip: 0, couple: 0 });
 
   const toggleSelectAll = () => {
     if (selectedIds.size === seats.length) setSelectedIds(new Set());

@@ -24,6 +24,7 @@ import UserForgotPassword from './pages/UserForgotPassword';
 import UserHome from './pages/UserHome';
 import UserMovies from './pages/UserMovies';
 import UserMovieDetail from './pages/UserMovieDetail';
+import UserCinemaSystem from './pages/UserCinemaSystem';
 import UserSearch from './pages/UserSearch';
 import Profile from './pages/Profile';
 import MyVouchers from './pages/MyVouchers';
@@ -95,7 +96,8 @@ function App() {
       <Route path="/booking/:showtimeId/summary" element={<OrderSummary />} />
       <Route path="/payment-result" element={<PaymentResult />} />
       <Route path="/movies" element={<UserMovies />} />
-      {/* <Route path="/movies/:id" element={<UserMovieDetail />} /> */}
+      <Route path="/movies/:id" element={<UserMovieDetail />} />
+      <Route path="/cinemas" element={<UserCinemaSystem />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/search" element={<UserSearch />} />
       <Route path="/profile" element={<Profile />} />

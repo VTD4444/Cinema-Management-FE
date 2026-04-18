@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { getSeatMapByShowtime } from '../api/seatApi';
@@ -38,12 +38,12 @@ const SeatSelection = () => {
   const basePrice = Number(base_price) || 80000;
 
   // Tính giá ghế theo loại
-  const getSeatPrice = (type) => Math.round(basePrice * (SEAT_MULTIPLIER[type] || 1));
+  const getSeatPrice = useCallback((type) => Math.round(basePrice * (SEAT_MULTIPLIER[type] || 1)), [basePrice]);
 
   const storageKey = `seat_selection_${showtimeId}`;
 
   // Load persisted selections from sessionStorage
-  const loadPersistedSelections = () => {
+  const loadPersistedSelections = useCallback(() => {
     try {
       const saved = sessionStorage.getItem(storageKey);
       if (saved) {
@@ -53,9 +53,9 @@ const SeatSelection = () => {
           foods: parsed.foods || {},
         };
       }
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
     return { seats: [], foods: {} };
-  };
+  }, [storageKey]);
 
   const persisted = loadPersistedSelections();
 
@@ -66,7 +66,6 @@ const SeatSelection = () => {
   const [selectedFoods, setSelectedFoods] = useState(persisted.foods);
 
   const [socket, setSocket] = useState(null);
-  const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Initialize Data
@@ -90,7 +89,6 @@ const SeatSelection = () => {
 
       } catch (err) {
         console.error(err);
-        setErrorMsg('Không thể tải dữ liệu phòng chiếu.');
       } finally {
         setLoading(false);
       }
@@ -105,7 +103,7 @@ const SeatSelection = () => {
         seats: selectedSeats,
         foods: selectedFoods,
       }));
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
   }, [selectedSeats, selectedFoods, storageKey]);
 
   // Handle Socket
@@ -192,7 +190,7 @@ const SeatSelection = () => {
     return () => {
       newSocket.disconnect();
     };
-  }, [showtimeId, isAuthenticated, user]);
+  }, [showtimeId, isAuthenticated, user, loadPersistedSelections]);
 
   const toggleSeat = (seat) => {
     if (seat.status === 'BOOKED' || (seat.status === 'HOLDING' && !selectedSeats.find(s => s.id === seat.id))) {
@@ -234,7 +232,7 @@ const SeatSelection = () => {
   // Calculations
   const seatTotal = useMemo(() => {
     return selectedSeats.reduce((sum, seat) => sum + getSeatPrice(seat.type), 0);
-  }, [selectedSeats, basePrice]);
+  }, [selectedSeats, getSeatPrice]);
 
   const foodTotal = useMemo(() => {
     let total = 0;
@@ -257,19 +255,19 @@ const SeatSelection = () => {
 
   return (
     <UserLayout>
-      <div className="min-h-screen bg-[#0e0e0e] text-zinc-300 pt-20 pb-24">
-        <div className="max-w-[1400px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="min-h-screen bg-[#0e0e0e] text-zinc-300 pb-16 pt-6 sm:pt-8">
+        <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-3 lg:gap-8">
 
           {/* Main Left Panel */}
           <div className="lg:col-span-2 space-y-8">
 
-            <h1 className="text-3xl font-bold text-white tracking-tight">Chọn ghế và dịch vụ</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Chọn ghế và dịch vụ</h1>
 
             {/* SEAT MAP */}
-            <div className="bg-[#141414] border border-zinc-800 rounded-2xl p-8">
+            <div className="rounded-2xl border border-zinc-800 bg-[#141414] p-4 sm:p-6 lg:p-8">
 
               {/* Legend */}
-              <div className="flex flex-col md:flex-row items-center justify-center gap-10 lg:gap-16 mb-12 text-sm font-medium bg-[#0e0e0e] py-4 px-6 rounded-2xl border border-zinc-800/50">
+              <div className="mb-8 flex flex-col items-center justify-center gap-6 rounded-2xl border border-zinc-800/50 bg-[#0e0e0e] px-4 py-4 text-sm font-medium sm:px-6 lg:mb-12 lg:gap-10 lg:gap-16">
 
                 {/* Status Group */}
                 <div className="flex flex-col items-center gap-3">
@@ -300,7 +298,7 @@ const SeatSelection = () => {
                 {/* Types Group */}
                 <div className="flex flex-col items-center gap-3">
                   <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-black">Loại Ghế & Giá</span>
-                  <div className="flex items-center justify-center gap-5">
+                  <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 rounded border border-zinc-600 bg-transparent"></div>
                       <div className="flex flex-col leading-tight">
@@ -343,7 +341,8 @@ const SeatSelection = () => {
               )}
 
               {/* Rows */}
-              <div className="flex flex-col items-center gap-4">
+              <div className="overflow-x-auto pb-1">
+              <div className="flex min-w-max flex-col items-center gap-4">
                 {Object.keys(seatMap).map((rowLabel) => (
                   <div key={rowLabel} className="flex items-center gap-5">
                     <span className="w-6 text-center font-bold text-zinc-500">{rowLabel}</span>
@@ -356,7 +355,7 @@ const SeatSelection = () => {
                             key={seat.id}
                             onClick={() => toggleSeat(seatWithRow)}
                             disabled={seat.status === 'BOOKED' || (seat.status === 'HOLDING' && !isSelected)}
-                            className={`h-9 rounded flex items-center justify-center text-xs font-bold transition-all ${seat.type === 'COUPLE' ? 'w-16' : 'w-9'
+                            className={`h-8 rounded flex items-center justify-center text-[11px] font-bold transition-all sm:h-9 ${seat.type === 'COUPLE' ? 'w-[56px] sm:w-16' : 'w-8 sm:w-9'
                               } border ${getSeatColor(seat, isSelected)}`}
                           >
                             {(seat.status === 'BOOKED' || (seat.status === 'HOLDING' && !isSelected)) && !isSelected
@@ -370,16 +369,17 @@ const SeatSelection = () => {
                   </div>
                 ))}
               </div>
+              </div>
             </div>
 
             {/* SERVICES */}
-            <div className="bg-[#141414] border border-zinc-800 rounded-2xl p-8">
+            <div className="rounded-2xl border border-zinc-800 bg-[#141414] p-4 sm:p-6 lg:p-8">
               <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
                 <svg className="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" /><line x1="6" y1="1" x2="6" y2="4" /><line x1="10" y1="1" x2="10" y2="4" /><line x1="14" y1="1" x2="14" y2="4" /></svg>
                 Dịch vụ (Bắp nước)
               </h2>
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {foods.map(food => {
                   const qty = selectedFoods[food.id] || 0;
                   return (
@@ -411,7 +411,7 @@ const SeatSelection = () => {
 
           {/* Right Panel: BILL */}
           <div className="relative">
-            <div className="sticky top-28 bg-[#141414] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="top-24 rounded-2xl border border-zinc-800 bg-[#141414] overflow-hidden shadow-2xl lg:sticky">
 
               {/* Movie Header Detail */}
               <div className="p-6 border-b border-zinc-800/50 flex gap-4">

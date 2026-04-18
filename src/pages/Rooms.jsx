@@ -4,8 +4,7 @@ import { Button, Badge } from '../components/ui';
 import RoomModals from '../components/features/rooms/RoomModals';
 import { getCities } from '../api/cityApi';
 import { getCinemas } from '../api/cinemaApi';
-import { getRooms, getRoomListFromResponse } from '../api/roomApi';
-import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
+import { getRooms } from '../api/roomApi';
 
 const ROOM_TYPE_LABELS = { standard: 'Standard', gold_class: 'Gold Class', couple: 'Couple' };
 const FORMAT_LABELS = { imax: 'IMAX', '2d': '2D', '3d': '3D' };
@@ -14,17 +13,6 @@ const STATUS_LABELS = {
   maintenance: { text: 'BẢO TRÌ', variant: 'warning' },
   pending: { text: 'CHỜ DUYỆT', variant: 'warning' },
 };
-
-/** Backend GET /provinces/admin và /cinemas/admin trả { data: { items, pageNo, ... } } */
-const extractListFromAdminResponse = (res) => {
-  const d = res?.data;
-  if (Array.isArray(d?.items)) return d.items;
-  if (Array.isArray(d)) return d;
-  if (Array.isArray(res)) return res;
-  return [];
-};
-
-const cinemaProvinceId = (c) => c?.province_id ?? c?.city_id;
 
 const Rooms = () => {
   const [cities, setCities] = useState([]);
@@ -58,12 +46,6 @@ const Rooms = () => {
     loadCities();
     loadCinemas();
   }, [loadCities, loadCinemas]);
-
-  const filteredCinemas = cinemaId
-    ? cinemas.filter((c) => String(c.id) === String(cinemaId))
-    : cityId
-      ? cinemas.filter((c) => String(c.province_id || c.city_id) === String(cityId))
-      : cinemas;
 
   useEffect(() => {
     if (!cityId) {

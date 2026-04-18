@@ -1,45 +1,87 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Play, X } from 'lucide-react';
 import { getMoviesPublic } from '../api/movieApi';
 import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 import { Button } from '../components/ui';
 import UserLayout from '../components/layout/UserLayout';
 
-import { useNavigate } from 'react-router-dom';
+const sectionHeadingClass = 'mb-4 inline-flex items-center gap-2 text-xl font-bold text-zinc-100';
 
-const SectionTitle = ({ title, actionLabel }) => (
-  <div className="flex items-center justify-between mb-4">
-    <h2 className="text-lg font-semibold text-white">{title}</h2>
-    {actionLabel && (
-      <button className="text-xs text-red-400 hover:text-red-300">{actionLabel}</button>
-    )}
-  </div>
-);
+const getPoster = (movie) => {
+  if (Array.isArray(movie?.poster_urls) && movie.poster_urls.length > 0) return movie.poster_urls[0];
+  return null;
+};
 
-const MovieCard = ({ movie }) => {
-  const navigate = useNavigate();
-  const poster = Array.isArray(movie.poster_urls) ? movie.poster_urls[0] : null;
+const getBackdrop = (movie) => {
+  if (Array.isArray(movie?.poster_urls) && movie.poster_urls.length > 1) return movie.poster_urls[1];
+  return getPoster(movie);
+};
+
+const getYoutubeEmbedUrl = (url) => {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes('youtu.be')) {
+      const id = parsed.pathname.replace('/', '').trim();
+      return id ? `https://www.youtube.com/embed/${id}` : '';
+    }
+    if (parsed.hostname.includes('youtube.com')) {
+      const id = parsed.searchParams.get('v');
+      return id ? `https://www.youtube.com/embed/${id}` : '';
+    }
+  } catch {
+    return '';
+  }
+  return '';
+};
+
+const MovieCard = ({ movie, onClick }) => {
+  const poster = getPoster(movie);
   return (
-    <div 
-      className="w-40 shrink-0 cursor-pointer group"
-      onClick={() => navigate(`/movie/${movie.id}`)}
+    <article className="group min-w-0">
+      <button type="button" onClick={onClick} className="w-full text-left">
+        <div className="aspect-[3/4] overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
+          {poster ? (
+            <img src={poster} alt={movie.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-xs text-zinc-500">No image</div>
+          )}
+        </div>
+        <h3 className="mt-2 line-clamp-1 text-[13px] font-semibold text-zinc-100">{movie.title}</h3>
+        <p className="mt-0.5 text-[11px] text-zinc-500">
+          {movie.release_date ? new Date(movie.release_date).toLocaleDateString('vi-VN') : 'Đang cập nhật'}
+        </p>
+      </button>
+    </article>
+  );
+};
+
+const TrailerThumb = ({ movie, onClick }) => {
+  const poster = getPoster(movie);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative w-32 shrink-0 overflow-hidden rounded-md border border-zinc-800 bg-zinc-900 text-left sm:w-[148px]"
     >
-      <div className="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 mb-2">
+      <div className="aspect-video">
         {poster ? (
-          // eslint-disable-next-line jsx-a11y/img-redundant-alt
-          <img src={poster} alt={movie.title} className="w-full h-full object-cover" />
+          <img src={poster} alt={movie.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-xs text-zinc-500">
-            No image
-          </div>
+          <div className="flex h-full w-full items-center justify-center text-[11px] text-zinc-500">Trailer</div>
         )}
       </div>
-      <p className="text-sm font-medium text-white line-clamp-2">{movie.title}</p>
-      {movie.release_date && (
-        <p className="text-xs text-zinc-400 mt-1">
-          {new Date(movie.release_date).toLocaleDateString('vi-VN')}
-        </p>
-      )}
-    </div>
+      <div className="absolute inset-0 bg-black/35" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/65 text-white">
+          <Play className="ml-0.5 h-3.5 w-3.5" />
+        </div>
+      </div>
+      <div className="absolute bottom-1 left-2 right-2">
+        <p className="line-clamp-1 text-[10px] font-medium text-zinc-200">{movie.title}</p>
+      </div>
+    </button>
   );
 };
 
@@ -47,229 +89,248 @@ const UserHome = () => {
   const navigate = useNavigate();
   const [nowShowing, setNowShowing] = useState([]);
   const [comingSoon, setComingSoon] = useState([]);
-  const [latestTrailers, setLatestTrailers] = useState([]);
-  const [actors, setActors] = useState([]); // tạm mock từ dữ liệu phim
   const [loading, setLoading] = useState(true);
+  const [activeTrailerMovie, setActiveTrailerMovie] = useState(null);
+  const [heroIndex, setHeroIndex] = useState(0);
 
   useEffect(() => {
     const fetchMovies = async () => {
       try {
         const [showingRes, comingRes] = await Promise.all([
-          getMoviesPublic({ status: 'SHOWING', pageNo: 1, pageSize: 10 }),
-          getMoviesPublic({ status: 'COMING_SOON', pageNo: 1, pageSize: 10 }),
+          getMoviesPublic({ status: 'SHOWING', pageNo: 1, pageSize: 12 }),
+          getMoviesPublic({ status: 'COMING_SOON', pageNo: 1, pageSize: 12 }),
         ]);
-
         const showingRaw = showingRes?.data?.items || showingRes?.data || [];
         const comingRaw = comingRes?.data?.items || comingRes?.data || [];
-        const showing = withoutSoftDeleted(Array.isArray(showingRaw) ? showingRaw : []);
-        const coming = withoutSoftDeleted(Array.isArray(comingRaw) ? comingRaw : []);
-
-        setNowShowing(showing);
-        setComingSoon(coming);
-
-        // Trailer mới nhất: lấy 6 phim có trailer_url (ưu tiên đang chiếu)
-        const allMovies = [...showing, ...coming];
-        setLatestTrailers(allMovies.filter((m) => m.trailer_url).slice(0, 6));
-
-        // Danh sách diễn viên: tạm mock từ directors_name/description nếu chưa có trường riêng
-        const actorNames = Array.from(
-          new Set(
-            allMovies
-              .flatMap((m) =>
-                typeof m.directors_name === 'string' ? m.directors_name.split(',') : []
-              )
-              .map((name) => name.trim())
-              .filter(Boolean),
-          ),
-        ).slice(0, 8);
-        setActors(actorNames);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to load movies for home', e);
+        setNowShowing(withoutSoftDeleted(Array.isArray(showingRaw) ? showingRaw : []));
+        setComingSoon(withoutSoftDeleted(Array.isArray(comingRaw) ? comingRaw : []));
+      } catch {
+        setNowShowing([]);
+        setComingSoon([]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchMovies();
   }, []);
 
-  const heroMovie = nowShowing[0] || comingSoon[0];
+  const heroMovies = nowShowing.length > 0 ? nowShowing : comingSoon;
+  const safeHeroIndex = heroMovies.length > 0 ? heroIndex % heroMovies.length : 0;
+  const heroMovie = heroMovies[safeHeroIndex] || null;
+  const latestTrailers = useMemo(() => [...nowShowing, ...comingSoon].filter((m) => m.trailer_url).slice(0, 5), [nowShowing, comingSoon]);
+  const actors = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [...nowShowing, ...comingSoon]
+            .flatMap((m) => (typeof m.directors_name === 'string' ? m.directors_name.split(',') : []))
+            .map((x) => x.trim())
+            .filter(Boolean),
+        ),
+      ).slice(0, 8),
+    [nowShowing, comingSoon],
+  );
+  const activeTrailerEmbedUrl = getYoutubeEmbedUrl(activeTrailerMovie?.trailer_url);
+
+  useEffect(() => {
+    setHeroIndex(0);
+  }, [heroMovies.length]);
+
+  useEffect(() => {
+    if (heroMovies.length <= 1) return undefined;
+    const intervalId = window.setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroMovies.length);
+    }, 4500);
+    return () => window.clearInterval(intervalId);
+  }, [heroMovies.length]);
 
   return (
     <UserLayout>
-      {/* Banner */}
-      <div className="px-10 pb-10">
-        <section className="grid grid-cols-1 lg:grid-cols-[2fr,1.2fr] gap-10 mb-12">
-          <div className="relative rounded-3xl overflow-hidden bg-zinc-900 min-h-[260px]">
-            {heroMovie && heroMovie.backdrop_url ? (
-              <img
-                src={heroMovie.backdrop_url}
-                alt={heroMovie.title}
-                className="absolute inset-0 w-full h-full object-cover opacity-70"
-              />
+      <div className="pb-12">
+        <section className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden border-y border-zinc-900 bg-zinc-900">
+          <div className="relative h-[320px] md:h-[460px]">
+            {heroMovie ? (
+              <img src={getBackdrop(heroMovie)} alt={heroMovie.title} className="h-full w-full object-cover" />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900" />
+              <div className="h-full w-full bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-            <div className="relative z-10 p-8 flex flex-col justify-center h-full max-w-xl">
-              <p className="text-xs uppercase tracking-[0.18em] text-red-400 mb-2">Now showing</p>
-              <h1 className="text-3xl md:text-4xl font-bold mb-3">{heroMovie?.title}</h1>
-              {heroMovie?.description && (
-                <p className="text-sm text-zinc-200 line-clamp-3 mb-6">{heroMovie.description}</p>
-              )}
-              <div className="flex gap-3">
-                <Button className="bg-red-600 hover:bg-red-500 h-10 px-4 rounded-full text-sm">
-                  Đặt vé ngay
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="border border-zinc-600 bg-zinc-900/40 hover:bg-zinc-800 h-10 px-4 rounded-full text-sm"
-                  onClick={() => heroMovie && navigate(`/movie/${heroMovie.id}`)}
-                >
-                  Xem chi tiết
-                </Button>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/15" />
+            <div className="absolute inset-0 px-5 py-6 md:px-8 md:py-8">
+              <div className="max-w-[420px]">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-red-400">Now Showing</p>
+                <h1 className="mb-2 text-3xl font-black leading-tight text-zinc-100 md:text-5xl">{heroMovie?.title || 'CineGo Movies'}</h1>
+                <p className="line-clamp-3 text-xs leading-5 text-zinc-300 md:text-sm">
+                  {heroMovie?.description || 'Khám phá phim mới, đặt vé nhanh và trải nghiệm điện ảnh đỉnh cao.'}
+                </p>
+                <div className="mt-4 flex gap-2.5">
+                  <Button className="h-9 rounded-md bg-primary px-4 text-xs font-semibold" onClick={() => heroMovie && navigate(`/movie/${heroMovie.id}`)}>
+                    Đặt Vé Ngay
+                  </Button>
+                  <Button variant="secondary" className="h-9 rounded-md px-4 text-xs font-semibold" onClick={() => heroMovie && navigate(`/movie/${heroMovie.id}`)}>
+                    Xem Info
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
+          <div className="flex items-center justify-center gap-2 border-t border-zinc-900 py-2">
+            {(heroMovies.length > 0 ? heroMovies : [null]).slice(0, 8).map((_, idx) => (
+              <button
+                key={`hero-dot-${idx}`}
+                type="button"
+                aria-label={`Chuyển banner ${idx + 1}`}
+                onClick={() => setHeroIndex(idx)}
+                className={`h-1.5 rounded-full transition-all ${
+                  idx === safeHeroIndex ? 'w-5 bg-zinc-300' : 'w-1.5 bg-zinc-700 hover:bg-zinc-500'
+                }`}
+              />
+            ))}
+          </div>
+        </section>
 
-          <div className="bg-zinc-900/70 rounded-3xl border border-zinc-800 p-6 flex flex-col justify-between">
+        <div className="mx-auto w-full max-w-6xl px-4 pt-5 sm:px-6 lg:px-8">
+        <section className="mt-1 border-t border-zinc-900 pt-4">
+          <p className="mb-2 text-[10px] uppercase tracking-[0.18em] text-zinc-500">Latest Trailers</p>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {(latestTrailers.length > 0 ? latestTrailers : (nowShowing[0] ? [nowShowing[0]] : [])).map((m) => (
+              <TrailerThumb key={`trailer-${m.id}`} movie={m} onClick={() => setActiveTrailerMovie(m)} />
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className={sectionHeadingClass}>
+              <span className="h-5 w-1 rounded-full bg-primary" />
+              Phim đang chiếu
+            </h2>
+            <button type="button" className="text-xs font-semibold text-primary hover:text-red-400" onClick={() => navigate('/movies')}>
+              Xem tất cả
+            </button>
+          </div>
+          {loading ? (
+            <p className="text-sm text-zinc-500">Đang tải danh sách phim...</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {nowShowing.slice(0, 5).map((movie) => (
+                <MovieCard key={movie.id} movie={movie} onClick={() => navigate(`/movie/${movie.id}`)} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-8 rounded-xl border border-purple-800/40 bg-gradient-to-r from-purple-900/80 via-violet-800/60 to-indigo-900/70 px-5 py-4">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <h2 className="text-lg font-semibold mb-2">Ưu đãi thành viên mới</h2>
-              <p className="text-sm text-zinc-300">
-                Đăng ký tài khoản ngay hôm nay để nhận ưu đãi giảm giá vé xem phim và tích điểm đổi
-                quà hấp dẫn.
-              </p>
+              <p className="text-lg font-bold text-white">Ưu đãi thành viên mới</p>
+              <p className="mt-1 text-xs text-purple-100/90">Đăng ký thành viên CineGo để nhận voucher và quyền lợi độc quyền.</p>
             </div>
-            <div className="mt-6 flex gap-3">
-              <Button
-                className="bg-purple-600 hover:bg-purple-500 h-10 px-4 rounded-full text-sm"
-                onClick={() => navigate('/register')}
-              >
-                Đăng ký ngay
-              </Button>
-              <Button
-                variant="ghost"
-                className="border border-zinc-600 bg-zinc-900/40 hover:bg-zinc-800 h-10 px-4 rounded-full text-sm"
-              >
-                Tìm hiểu thêm
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        {/* Trailer mới nhất */}
-        <section className="mb-10">
-          <SectionTitle title="Trailer mới nhất" actionLabel="Xem tất cả" />
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {latestTrailers.length === 0 ? (
-              <p className="text-sm text-zinc-400">Chưa có trailer nào.</p>
-            ) : (
-              latestTrailers.map((m) => (
-                <div
-                  key={`trailer-${m.id}`}
-                  className="w-56 shrink-0 rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 relative"
-                >
-                  <div className="aspect-video relative">
-                    {m.trailer_thumbnail ? (
-                      <img
-                        src={m.trailer_thumbnail}
-                        alt={m.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-zinc-500">
-                        Trailer
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                      <div className="h-10 w-10 rounded-full bg-white/90 flex items-center justify-center text-black text-xs">
-                        ▶
-                      </div>
-                    </div>
-                  </div>
-                  <div className="px-3 py-2">
-                    <p className="text-sm font-medium text-white line-clamp-1">{m.title}</p>
-                    <p className="text-xs text-zinc-400 mt-1">Trailer chính thức</p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-
-        {/* Phim đang chiếu */}
-        <section className="mb-10">
-          <SectionTitle title="Phim đang chiếu" actionLabel="Xem tất cả" />
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {loading && nowShowing.length === 0 ? (
-              <p className="text-sm text-zinc-400">Đang tải danh sách phim...</p>
-            ) : nowShowing.length === 0 ? (
-              <p className="text-sm text-zinc-400">Hiện chưa có phim đang chiếu.</p>
-            ) : (
-              nowShowing.map((m) => <MovieCard key={m.id} movie={m} />)
-            )}
-          </div>
-        </section>
-
-        {/* Phim sắp chiếu */}
-        <section className="mb-10">
-          <SectionTitle title="Phim sắp chiếu" actionLabel="Xem tất cả" />
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {loading && comingSoon.length === 0 ? (
-              <p className="text-sm text-zinc-400">Đang tải danh sách phim...</p>
-            ) : comingSoon.length === 0 ? (
-              <p className="text-sm text-zinc-400">Hiện chưa có phim sắp chiếu.</p>
-            ) : (
-              comingSoon.map((m) => <MovieCard key={m.id} movie={m} />)
-            )}
-          </div>
-        </section>
-
-        {/* Danh sách các diễn viên */}
-        <section className="mb-10">
-          <SectionTitle title="Danh sách các diễn viên" />
-          <div className="flex gap-6 overflow-x-auto pb-2">
-            {actors.length === 0 ? (
-              <p className="text-sm text-zinc-400">Danh sách diễn viên sẽ được cập nhật.</p>
-            ) : (
-              actors.map((name) => (
-                <div key={name} className="flex flex-col items-center gap-2">
-                  <div className="h-16 w-16 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-semibold">
-                    {name.charAt(0)}
-                  </div>
-                  <p className="text-xs text-zinc-200 text-center max-w-[96px] line-clamp-2">
-                    {name}
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-
-        {/* Quảng cáo CineGoPlus */}
-        <section className="mt-12 text-center text-sm text-zinc-200 bg-gradient-to-r from-red-700 via-purple-700 to-indigo-700 rounded-3xl py-10 px-6 shadow-[0_0_40px_rgba(239,68,68,0.35)]">
-          <p className="text-xs uppercase tracking-[0.25em] mb-2 text-red-200/90">
-            CineGoPlus membership
-          </p>
-          <h2 className="text-2xl font-bold mb-3">Trải nghiệm điện ảnh đỉnh cao</h2>
-          <p className="max-w-2xl mx-auto mb-6 text-sm text-zinc-100">
-            Tham gia CineGoPlus để nhận ưu đãi độc quyền, tích điểm đổi quà, vé xem phim giá tốt và
-            nhiều đặc quyền dành riêng cho thành viên.
-          </p>
-          <div className="flex justify-center gap-3">
-            <Button className="bg-white text-black hover:bg-zinc-100 h-10 px-6 rounded-full text-sm">
+            <Button className="h-9 rounded-md bg-white px-4 text-xs font-semibold text-zinc-900 hover:bg-zinc-100" onClick={() => navigate('/register')}>
               Đăng ký ngay
             </Button>
-            <Button
-              variant="ghost"
-              className="border border-white/70 text-white hover:bg-white/10 h-10 px-6 rounded-full text-sm"
-            >
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className={sectionHeadingClass}>
+              <span className="h-5 w-1 rounded-full bg-primary" />
+              Phim sắp chiếu
+            </h2>
+            <button type="button" className="text-xs font-semibold text-primary hover:text-red-400" onClick={() => navigate('/movies')}>
+              Xem tất cả
+            </button>
+          </div>
+          {loading ? (
+            <p className="text-sm text-zinc-500">Đang tải danh sách phim...</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {comingSoon.slice(0, 5).map((movie) => (
+                <MovieCard key={movie.id} movie={movie} onClick={() => navigate(`/movie/${movie.id}`)} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-8">
+          <h2 className={sectionHeadingClass}>
+            <span className="h-5 w-1 rounded-full bg-primary" />
+            Danh sách các diễn viên
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-5">
+            {actors.length === 0 ? (
+              <p className="text-sm text-zinc-500">Danh sách diễn viên sẽ được cập nhật.</p>
+            ) : (
+              actors.map((name) => (
+                <div key={name} className="w-16 text-center sm:w-[78px]">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-sm font-bold text-zinc-300">
+                    {name.charAt(0)}
+                  </div>
+                  <p className="mt-2 line-clamp-2 text-[11px] text-zinc-400">{name}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="mt-12 border-t border-zinc-900 pt-8 text-center">
+          <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">CineGo Membership</p>
+          <h3 className="mt-2 text-3xl font-bold text-zinc-100">Trải nghiệm điện ảnh đỉnh cao</h3>
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-zinc-400">
+            Đăng ký thành viên CineGo ngay hôm nay để đặt vé nhanh, nhận ưu đãi độc quyền và tích điểm đổi quà.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Button className="h-9 rounded-md bg-primary px-5 text-xs font-semibold" onClick={() => navigate('/register')}>
+              Đăng ký ngay
+            </Button>
+            <Button variant="secondary" className="h-9 rounded-md px-5 text-xs font-semibold" onClick={() => navigate('/about')}>
               Tìm hiểu thêm
             </Button>
           </div>
         </section>
+        </div>
       </div>
+
+      {activeTrailerMovie && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-4">
+          <div className="w-full max-w-4xl overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+              <h3 className="line-clamp-1 text-sm font-semibold text-zinc-100">{activeTrailerMovie.title}</h3>
+              <button
+                type="button"
+                onClick={() => setActiveTrailerMovie(null)}
+                className="rounded-md p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                aria-label="Đóng trailer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="aspect-video w-full bg-black">
+              {activeTrailerEmbedUrl ? (
+                <iframe
+                  src={activeTrailerEmbedUrl}
+                  title={`${activeTrailerMovie.title} trailer`}
+                  className="h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              ) : activeTrailerMovie.trailer_url ? (
+                <a
+                  href={activeTrailerMovie.trailer_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-full w-full items-center justify-center text-sm text-zinc-300 hover:text-white"
+                >
+                  Mở trailer trong tab mới
+                </a>
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-sm text-zinc-500">Trailer chưa khả dụng</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </UserLayout>
   );
 };

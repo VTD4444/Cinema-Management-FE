@@ -36,13 +36,6 @@ const OrderSummary = () => {
     }
   }, [isAuthenticated, selectedSeats]);
 
-  if (errorState === 'AUTH_FAILED') {
-    return <div className="text-white text-3xl p-10 bg-red-900 w-full h-screen">LỖI: Bạn chưa đăng nhập (isAuthenticated = false trong OrderSummary).</div>;
-  }
-  if (errorState === 'NO_SEATS') {
-    return <div className="text-white text-3xl p-10 bg-yellow-900 w-full h-screen">LỖI: Không nhận được thông tin ghế. Do giỏ hàng tụt mất lúc chuyển trang.</div>;
-  }
-
   // Countdown logic (10 minutes = 600 seconds)
   const [timeLeft, setTimeLeft] = useState(600);
   
@@ -100,6 +93,13 @@ const OrderSummary = () => {
 
   const finalTotal = subTotal - discountAmount;
   const [isProcessing, setIsProcessing] = useState(false);
+
+  if (errorState === 'AUTH_FAILED') {
+    return <div className="text-white text-3xl p-10 bg-red-900 w-full h-screen">LỖI: Bạn chưa đăng nhập (isAuthenticated = false trong OrderSummary).</div>;
+  }
+  if (errorState === 'NO_SEATS') {
+    return <div className="text-white text-3xl p-10 bg-yellow-900 w-full h-screen">LỖI: Không nhận được thông tin ghế. Do giỏ hàng tụt mất lúc chuyển trang.</div>;
+  }
 
   const handleCheckout = async () => {
     setIsProcessing(true);

@@ -18,6 +18,7 @@ import {
   TableHead,
   TableCell,
   Badge,
+  MobileTableCards,
 } from '../components/ui';
 import MovieModals from '../components/features/movies/MovieModals';
 import { getMovies } from '../api/movieApi';
@@ -121,7 +122,7 @@ const Movies = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-bold tracking-tight text-white">Danh sách phim</h2>
         <Button
           onClick={() => setModalState({ type: 'add', data: null })}
@@ -135,7 +136,7 @@ const Movies = () => {
       <div className="rounded-xl border border-border bg-surface/30 p-1 flex flex-col gap-1 overflow-hidden shadow-sm">
         <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between border-b border-border/50 bg-surface/50 rounded-t-lg">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[200px] max-w-md">
+            <div className="relative w-full sm:flex-1 sm:min-w-[200px] sm:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <input
                 type="text"
@@ -146,7 +147,7 @@ const Movies = () => {
                 className="flex h-10 w-full rounded-full border border-border bg-zinc-900/80 pl-10 pr-4 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex w-full items-center gap-2 sm:w-auto">
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
@@ -163,6 +164,35 @@ const Movies = () => {
         </div>
 
         <div className="p-0 bg-transparent border-t border-border/50">
+          <MobileTableCards className="p-3">
+            {loading ? (
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 text-center text-sm text-zinc-500">Đang tải...</div>
+            ) : movies.length === 0 ? (
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 text-center text-sm text-zinc-500">
+                Chưa có phim nào. Nhấn "Thêm Phim Mới" để thêm.
+              </div>
+            ) : (
+              movies.map((movie) => {
+                const posterUrl = getPosterUrl(movie);
+                return (
+                  <div key={`mobile-${movie.id}`} className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+                    <div className="flex items-start gap-3">
+                      <div className="h-14 w-14 overflow-hidden rounded-md bg-zinc-800">
+                        {posterUrl ? <img src={posterUrl} alt={movie.title} className="h-full w-full object-cover" /> : <Clapperboard className="m-auto h-6 w-6 text-zinc-500" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-1 text-sm font-semibold text-zinc-100">{movie.title}</p>
+                        <p className="mt-1 text-xs text-zinc-500">{movie.directors_name || '—'}</p>
+                        <div className="mt-2">{getStatusBadge(movie.status)}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </MobileTableCards>
+
+          <div className="hidden md:block">
           <Table className="border-0 rounded-none bg-transparent">
             <TableHeader className="bg-transparent border-b border-border/40">
               <TableRow className="hover:bg-transparent border-0">
@@ -256,10 +286,11 @@ const Movies = () => {
               )}
             </TableBody>
           </Table>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between px-6 py-4 border-t border-border/50 bg-surface/50 rounded-b-lg">
-          <span className="text-sm text-zinc-500">
+        <div className="flex flex-col gap-3 px-4 py-4 border-t border-border/50 bg-surface/50 rounded-b-lg sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <span className="text-xs sm:text-sm text-zinc-500">
             Hiển thị <span className="font-semibold text-zinc-300">{total === 0 ? 0 : start}</span>
             {' - '}
             <span className="font-semibold text-zinc-300">{end}</span> trong{' '}

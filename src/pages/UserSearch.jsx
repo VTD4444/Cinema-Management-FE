@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import UserLayout from '../components/layout/UserLayout';
@@ -71,7 +71,6 @@ const MovieCard = ({ movie }) => {
 
 const UserSearch = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const initialQuery = searchParams.get('q') || '';
 
   const [searchInput, setSearchInput] = useState(initialQuery);
@@ -86,7 +85,6 @@ const UserSearch = () => {
   // Pagination (mocking support)
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
     // Load genres once
@@ -98,7 +96,7 @@ const UserSearch = () => {
       .catch(() => setGenres([]));
   }, []);
 
-  const fetchMovies = async () => {
+  const fetchMovies = useCallback(async () => {
     setLoading(true);
     try {
       const params = {
@@ -139,7 +137,6 @@ const UserSearch = () => {
       }
 
       setMovies(filtered);
-      setTotalItems(total);
       setTotalPages(Math.ceil(total / 12) || 1);
     } catch (err) {
       console.error('Search failed', err);
@@ -147,11 +144,11 @@ const UserSearch = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, initialQuery, selectedGenre, statusFilter]);
 
   useEffect(() => {
     fetchMovies();
-  }, [initialQuery, page, selectedGenre, statusFilter]);
+  }, [fetchMovies]);
 
   useEffect(() => {
     if (debouncedSearch !== initialQuery) {
@@ -174,13 +171,13 @@ const UserSearch = () => {
       <div className="min-h-screen bg-[#0e0e0e] text-white">
 
         {/* Search Header Banner */}
-        <div className="pt-16 pb-12 px-6 flex flex-col items-center justify-center text-center border-b border-zinc-800">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Tìm kiếm phim</h1>
-          <p className="text-zinc-400 text-sm md:text-base max-w-xl mb-8">
+        <div className="border-b border-zinc-800 px-4 pb-10 pt-10 text-center sm:px-6 sm:pt-14 flex flex-col items-center">
+          <h1 className="mb-4 text-3xl font-bold tracking-tight md:text-5xl">Tìm kiếm phim</h1>
+          <p className="text-zinc-400 text-sm md:text-base max-w-xl mx-auto mb-8">
             Khám phá bộ sưu tập phim đa dạng, tìm rạp chiếu gần bạn và đặt vé ngay hôm nay.
           </p>
 
-          <div className="w-full max-w-2xl relative flex items-center">
+          <div className="w-full max-w-2xl mx-auto relative flex items-center">
             <div className="absolute left-4 text-zinc-400">
               <Search className="h-5 w-5" />
             </div>
@@ -195,10 +192,10 @@ const UserSearch = () => {
         </div>
 
         {/* Two Sidebar Layout */}
-        <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-4 gap-10">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-8 sm:px-6 lg:grid-cols-4 lg:gap-10">
 
           {/* LEFT SIDEBAR (FILTERS) */}
-          <div className="lg:col-span-1 border-r border-zinc-800/50 pr-6 space-y-10">
+          <div className="space-y-8 rounded-xl border border-zinc-800/50 p-4 lg:col-span-1 lg:rounded-none lg:border-0 lg:border-r lg:pr-6 lg:pl-0">
             {/* Thể loại */}
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -265,7 +262,7 @@ const UserSearch = () => {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="animate-pulse flex flex-col gap-3">
                     <div className="aspect-[2/3] bg-zinc-800/50 rounded-xl"></div>
@@ -280,7 +277,7 @@ const UserSearch = () => {
                 <p className="text-zinc-400">Không tìm thấy phim nào khớp với điều kiện tìm kiếm.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
                 {movies.map(movie => (
                   <MovieCard key={movie.id} movie={movie} />
                 ))}
@@ -289,7 +286,7 @@ const UserSearch = () => {
 
             {/* Pagination */}
             {!loading && totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-12 bg-zinc-900/50 w-fit mx-auto p-1.5 rounded-full border border-zinc-800">
+              <div className="mt-10 flex w-fit max-w-full items-center justify-center gap-1 overflow-x-auto rounded-full border border-zinc-800 bg-zinc-900/50 p-1.5">
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
@@ -297,7 +294,7 @@ const UserSearch = () => {
                 >
                   &lsaquo;
                 </button>
-                {[...Array(totalPages)].map((_, i) => (
+                {[...Array(totalPages)].slice(0, 7).map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setPage(i + 1)}

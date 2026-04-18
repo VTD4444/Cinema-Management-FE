@@ -10,6 +10,13 @@ const formatCurrency = (amount) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 };
 
+const TABS = [
+  { id: 'all', label: 'Tất cả', payload: '' },
+  { id: 'success', label: 'Hoàn thành', payload: 'SUCCESS' },
+  { id: 'processing', label: 'Đang xử lý', payload: 'PENDING' },
+  { id: 'failed', label: 'Đã hủy', payload: 'FAILED' }
+];
+
 const TicketCard = ({ ticket, onShowQR, onShowDetails }) => {
   const isSuccess = ticket.status === 'success';
   const isProcessing = ticket.status === 'processing';
@@ -156,18 +163,11 @@ const MyTickets = () => {
     if (ticket.orderId) fetchOrderDetail(ticket.orderId);
   };
 
-  const tabs = [
-    { id: 'all', label: 'Tất cả', payload: '' },
-    { id: 'success', label: 'Hoàn thành', payload: 'SUCCESS' },
-    { id: 'processing', label: 'Đang xử lý', payload: 'PENDING' },
-    { id: 'failed', label: 'Đã hủy', payload: 'FAILED' }
-  ];
-
   useEffect(() => {
     const fetchTickets = async () => {
       setLoading(true);
       try {
-        const currentTab = tabs.find(t => t.id === activeTab);
+        const currentTab = TABS.find(t => t.id === activeTab);
         const params = { pageNo: 1, pageSize: 50 };
         if (currentTab && currentTab.payload) {
           params.order_status = currentTab.payload;
@@ -226,7 +226,7 @@ const MyTickets = () => {
 
           {/* Tabs */}
           <div className="flex items-center gap-6 border-b border-zinc-800 mb-8 overflow-x-auto">
-            {tabs.map(tab => (
+            {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}

@@ -5,7 +5,7 @@ import { NAVIGATION_ITEMS } from '../../config/navigation';
 import { cn } from '../../utils/mergeClass';
 import useAuthStore from '../../store/useAuthStore';
 
-export const Sidebar = () => {
+export const Sidebar = ({ isOpen = false, onClose }) => {
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
   const [expandedMenus, setExpandedMenus] = useState(['/movies', '/cinemas']);
@@ -16,8 +16,25 @@ export const Sidebar = () => {
     );
   };
 
+  const closeOnMobile = () => {
+    if (window.matchMedia('(max-width: 767px)').matches && onClose) onClose();
+  };
+
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-surface border-r border-border flex flex-col transition-transform">
+    <>
+      {isOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={closeOnMobile}
+          aria-label="Đóng menu"
+        />
+      )}
+      <aside
+        className={`fixed left-0 top-0 z-50 h-screen w-64 border-r border-border bg-surface transition-transform duration-200 md:z-40 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0`}
+      >
       {/* Logo Area */}
       <div className="flex h-20 items-center px-6 gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
@@ -82,6 +99,7 @@ export const Sidebar = () => {
               ) : (
                 <NavLink
                   to={item.href}
+                  onClick={closeOnMobile}
                   className={({ isActive: isExactActive }) =>
                     cn(
                       'flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group relative',
@@ -116,6 +134,7 @@ export const Sidebar = () => {
                     <NavLink
                       key={child.name}
                       to={child.href}
+                      onClick={closeOnMobile}
                       // Use end modifier so nested routes like /movies/new don't highlight the parent 'Danh sách Phim'
                       end={child.href === '/movies' || child.href === '/cinemas'}
                       className={({ isActive: isChildActive }) =>
@@ -140,13 +159,17 @@ export const Sidebar = () => {
       {/* Logout Button */}
       <div className="p-4 border-t border-border mt-auto">
         <button
-          onClick={logout}
+          onClick={() => {
+            logout();
+            closeOnMobile();
+          }}
           className="flex w-full box-border items-center px-4 py-2.5 text-sm font-medium text-gray-400 bg-zinc-900 rounded-lg transition-colors hover:text-white hover:bg-zinc-800"
         >
           <LogOut className="mr-3 h-4 w-4" />
           Đăng xuất
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 };
