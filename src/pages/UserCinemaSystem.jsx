@@ -121,11 +121,10 @@ const UserCinemaSystem = () => {
                   <button
                     type="button"
                     onClick={() => setProvinceId('all')}
-                    className={`rounded-md border px-2 py-2 text-xs ${
-                      provinceId === 'all'
+                    className={`rounded-md border px-2 py-2 text-xs ${provinceId === 'all'
                         ? 'border-primary bg-primary/20 text-primary'
                         : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'
-                    }`}
+                      }`}
                   >
                     Tất cả
                   </button>
@@ -134,11 +133,10 @@ const UserCinemaSystem = () => {
                       key={p.id}
                       type="button"
                       onClick={() => setProvinceId(p.id)}
-                      className={`rounded-md border px-2 py-2 text-xs ${
-                        provinceId === p.id
+                      className={`rounded-md border px-2 py-2 text-xs ${provinceId === p.id
                           ? 'border-primary bg-primary/20 text-primary'
                           : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'
-                      }`}
+                        }`}
                     >
                       {p.name}
                     </button>
@@ -156,11 +154,10 @@ const UserCinemaSystem = () => {
                         key={c.id}
                         type="button"
                         onClick={() => setSelectedCinemaId(c.id)}
-                        className={`w-full rounded-xl border p-3 text-left transition-colors ${
-                          active
+                        className={`w-full rounded-xl border p-3 text-left transition-colors ${active
                             ? 'border-primary bg-primary/10'
                             : 'border-zinc-800 bg-zinc-900/70 hover:border-zinc-700'
-                        }`}
+                          }`}
                       >
                         <p className={`text-sm font-semibold ${active ? 'text-primary' : 'text-zinc-200'}`}>{c.name}</p>
                         <p className="mt-1 line-clamp-2 text-[11px] text-zinc-500">{c.address}</p>
@@ -257,9 +254,9 @@ const UserCinemaSystem = () => {
 
                     <div className="space-y-4">
                       <div className="rounded-xl border border-zinc-900 bg-zinc-900/60 p-4">
-                      <h3 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
+                        <h3 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
                           <span className="h-6 w-1 rounded-full bg-primary" />
-                        <span className="text-[24px] leading-none md:text-[24px]">Liên hệ</span>
+                          <span className="text-[24px] leading-none md:text-[24px]">Liên hệ</span>
                         </h3>
                         <div className="space-y-3">
                           <div className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-800/30 px-3 py-3">
@@ -284,9 +281,9 @@ const UserCinemaSystem = () => {
                       </div>
 
                       <div className="rounded-xl border border-zinc-900 bg-zinc-900/60 p-4">
-                      <h3 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
+                        <h3 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
                           <span className="h-6 w-1 rounded-full bg-primary" />
-                        <span className="text-[24px] leading-none md:text-[24px]">Tiện ích rạp</span>
+                          <span className="text-[24px] leading-none md:text-[24px]">Tiện ích rạp</span>
                         </h3>
                         <div className="grid grid-cols-2 gap-2 text-[10px]">
                           <span className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-800/30 px-2.5 py-1.5 font-semibold text-zinc-300">

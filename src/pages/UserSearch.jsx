@@ -171,13 +171,13 @@ const UserSearch = () => {
       <div className="min-h-screen bg-[#0e0e0e] text-white">
 
         {/* Search Header Banner */}
-        <div className="border-b border-zinc-800 px-4 pb-10 pt-10 text-center sm:px-6 sm:pt-14">
+        <div className="border-b border-zinc-800 px-4 pb-10 pt-10 text-center sm:px-6 sm:pt-14 flex flex-col items-center">
           <h1 className="mb-4 text-3xl font-bold tracking-tight md:text-5xl">Tìm kiếm phim</h1>
-          <p className="text-zinc-400 text-sm md:text-base max-w-xl mb-8">
+          <p className="text-zinc-400 text-sm md:text-base max-w-xl mx-auto mb-8">
             Khám phá bộ sưu tập phim đa dạng, tìm rạp chiếu gần bạn và đặt vé ngay hôm nay.
           </p>
 
-          <div className="w-full max-w-2xl relative flex items-center">
+          <div className="w-full max-w-2xl mx-auto relative flex items-center">
             <div className="absolute left-4 text-zinc-400">
               <Search className="h-5 w-5" />
             </div>

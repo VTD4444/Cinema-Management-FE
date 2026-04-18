@@ -42,3 +42,11 @@ export const replyContact = (id, payload) => {
 export const resolveContact = (id) => {
   return axiosClient.put(`${CONTACTS_BASE}/${id}/resolve`);
 };
+
+/**
+ * Gửi contact mới từ giao diện người dùng
+ * @param {Object} payload { subject, message, full_name, email, phone }
+ */
+export const createContact = (payload) => {
+  return axiosClient.post(CONTACTS_BASE, payload);
+};

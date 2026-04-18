@@ -30,6 +30,7 @@ import UserSearch from './pages/UserSearch';
 import Profile from './pages/Profile';
 import MyVouchers from './pages/MyVouchers';
 import MyTickets from './pages/MyTickets';
+import UserContact from './pages/UserContact';
 import AboutUs from './pages/AboutUs';
 import MovieDetails from './pages/MovieDetails';
 import SeatSelection from './pages/SeatSelection';
@@ -104,6 +105,7 @@ function App() {
       <Route path="/profile" element={<Profile />} />
       <Route path="/my-vouchers" element={<MyVouchers />} />
       <Route path="/my-tickets" element={<MyTickets />} />
+      <Route path="/contact" element={<UserContact />} />
       <Route path="/login" element={<UserLogin />} />
       <Route path="/register" element={<UserRegister />} />
       <Route path="/forgot-password" element={<UserForgotPassword />} />
