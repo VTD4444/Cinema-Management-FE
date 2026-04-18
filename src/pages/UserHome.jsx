@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, X } from 'lucide-react';
 import { getMoviesPublic } from '../api/movieApi';
@@ -94,6 +94,7 @@ const UserHome = () => {
   const [loading, setLoading] = useState(true);
   const [activeTrailerMovie, setActiveTrailerMovie] = useState(null);
   const [heroIndex, setHeroIndex] = useState(0);
+  const [heroAnimating, setHeroAnimating] = useState(false);
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -126,17 +127,33 @@ const UserHome = () => {
   const latestTrailers = useMemo(() => [...nowShowing, ...comingSoon].filter((m) => m.trailer_url).slice(0, 5), [nowShowing, comingSoon]);
   const activeTrailerEmbedUrl = getYoutubeEmbedUrl(activeTrailerMovie?.trailer_url);
 
+  const switchHero = useCallback(
+    (nextIndex) => {
+      if (heroMovies.length === 0) return;
+      const normalized = ((nextIndex % heroMovies.length) + heroMovies.length) % heroMovies.length;
+      if (normalized === safeHeroIndex || heroAnimating) return;
+
+      setHeroAnimating(true);
+      window.setTimeout(() => {
+        setHeroIndex(normalized);
+        window.requestAnimationFrame(() => setHeroAnimating(false));
+      }, 170);
+    },
+    [heroMovies.length, safeHeroIndex, heroAnimating],
+  );
+
   useEffect(() => {
     setHeroIndex(0);
+    setHeroAnimating(false);
   }, [heroMovies.length]);
 
   useEffect(() => {
     if (heroMovies.length <= 1) return undefined;
     const intervalId = window.setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % heroMovies.length);
+      switchHero(safeHeroIndex + 1);
     }, 4500);
     return () => window.clearInterval(intervalId);
-  }, [heroMovies.length]);
+  }, [heroMovies.length, safeHeroIndex, switchHero]);
 
   return (
     <UserLayout>
@@ -144,12 +161,22 @@ const UserHome = () => {
         <section className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen overflow-hidden border-y border-zinc-900 bg-zinc-900">
           <div className="relative h-[320px] md:h-[460px]">
             {heroMovie ? (
-              <img src={getBackdrop(heroMovie)} alt={heroMovie.title} className="h-full w-full object-cover" />
+              <img
+                src={getBackdrop(heroMovie)}
+                alt={heroMovie.title}
+                className={`h-full w-full object-cover transition-opacity duration-500 ${
+                  heroAnimating ? 'opacity-0' : 'opacity-100'
+                }`}
+              />
             ) : (
               <div className="h-full w-full bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900" />
             )}
             <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/15" />
-            <div className="absolute inset-0 px-5 py-6 md:px-8 md:py-8">
+            <div
+              className={`absolute inset-0 px-5 py-6 transition-all duration-500 md:px-8 md:py-8 ${
+                heroAnimating ? 'translate-y-2 opacity-0' : 'translate-y-0 opacity-100'
+              }`}
+            >
               <div className="max-w-[420px]">
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-red-400">Now Showing</p>
                 <h1 className="mb-2 text-3xl font-black leading-tight text-zinc-100 md:text-5xl">{heroMovie?.title || 'CineGo Movies'}</h1>
@@ -173,7 +200,7 @@ const UserHome = () => {
                 key={`hero-dot-${idx}`}
                 type="button"
                 aria-label={`Chuyển banner ${idx + 1}`}
-                onClick={() => setHeroIndex(idx)}
+                onClick={() => switchHero(idx)}
                 className={`h-1.5 rounded-full transition-all ${
                   idx === safeHeroIndex ? 'w-5 bg-zinc-300' : 'w-1.5 bg-zinc-700 hover:bg-zinc-500'
                 }`}

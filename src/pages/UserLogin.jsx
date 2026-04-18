@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input, Button } from '../components/ui';
+import UserLayout from '../components/layout/UserLayout';
 import { login as loginApi } from '../api/authApi';
 import useAuthStore from '../store/useAuthStore';
 
@@ -42,27 +43,12 @@ const UserLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-zinc-900 to-black flex flex-col">
-      <header className="flex items-center justify-between px-8 py-4 text-sm text-zinc-200">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-red-600 flex items-center justify-center text-white font-bold">
-            C
-          </div>
-          <span className="font-semibold">CinemaPlus</span>
-        </div>
-        <nav className="flex items-center gap-6">
-          <button className="text-zinc-300 hover:text-white transition-colors">Phim</button>
-          <button className="text-zinc-300 hover:text-white transition-colors">Rạp</button>
-          <button className="text-zinc-300 hover:text-white transition-colors">Giới thiệu</button>
-        </nav>
-        <button className="text-zinc-300 hover:text-white text-xs">Trợ giúp</button>
-      </header>
-
-      <main className="flex-1 flex items-center justify-center px-4">
+    <UserLayout>
+      <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-black via-zinc-900/50 to-[#0e0e0e] px-4 py-10 sm:py-12">
         <div className="w-full max-w-md bg-zinc-900/80 border border-zinc-800 rounded-2xl shadow-2xl px-8 py-10">
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-bold text-white">Đăng nhập</h1>
-            <p className="text-sm text-zinc-400 mt-1">Chào mừng bạn trở lại với CinemaPlus</p>
+            <p className="text-sm text-zinc-400 mt-1">Chào mừng bạn trở lại với CineGo</p>
           </div>
 
           {error && (
@@ -120,8 +106,8 @@ const UserLogin = () => {
             </p>
           </form>
         </div>
-      </main>
-    </div>
+      </div>
+    </UserLayout>
   );
 };
 

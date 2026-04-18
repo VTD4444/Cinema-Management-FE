@@ -173,7 +173,7 @@ const UserLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-[#0e0e0e] text-white flex flex-col">
       <UserHeader />
-      <main className="flex-1">{children}</main>
+      <main className="flex flex-1 flex-col">{children}</main>
       <UserFooter />
     </div>
   );
