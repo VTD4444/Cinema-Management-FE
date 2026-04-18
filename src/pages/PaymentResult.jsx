@@ -59,6 +59,13 @@ const PaymentResult = () => {
         if (data?.success) {
           setIsSuccess(true);
           setOrderData(data?.data || null); // { order_id, booking_code, status, payment_time }
+
+          // Xóa session storage của seat_selection sau khi đặt vé thành công
+          Object.keys(sessionStorage).forEach(key => {
+            if (key.startsWith('seat_selection_')) {
+              sessionStorage.removeItem(key);
+            }
+          });
         } else {
           setIsSuccess(false);
           setErrorMsg(data?.message || 'Giao dịch bị từ chối hoặc đã hủy.');
