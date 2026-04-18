@@ -24,6 +24,7 @@ import UserForgotPassword from './pages/UserForgotPassword';
 import UserHome from './pages/UserHome';
 import UserMovies from './pages/UserMovies';
 import UserMovieDetail from './pages/UserMovieDetail';
+import UserActorDetail from './pages/UserActorDetail';
 import UserCinemaSystem from './pages/UserCinemaSystem';
 import UserSearch from './pages/UserSearch';
 import Profile from './pages/Profile';
@@ -96,6 +97,7 @@ function App() {
       <Route path="/payment-result" element={<PaymentResult />} />
       <Route path="/movies" element={<UserMovies />} />
       <Route path="/movies/:id" element={<UserMovieDetail />} />
+      <Route path="/actors/:id" element={<UserActorDetail />} />
       <Route path="/cinemas" element={<UserCinemaSystem />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/search" element={<UserSearch />} />

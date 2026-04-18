@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, X } from 'lucide-react';
 import { getMoviesPublic } from '../api/movieApi';
+import { getActorsPublic } from '../api/actorApi';
 import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 import { Button } from '../components/ui';
 import UserLayout from '../components/layout/UserLayout';
@@ -89,6 +90,7 @@ const UserHome = () => {
   const navigate = useNavigate();
   const [nowShowing, setNowShowing] = useState([]);
   const [comingSoon, setComingSoon] = useState([]);
+  const [actors, setActors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTrailerMovie, setActiveTrailerMovie] = useState(null);
   const [heroIndex, setHeroIndex] = useState(0);
@@ -96,17 +98,21 @@ const UserHome = () => {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const [showingRes, comingRes] = await Promise.all([
+        const [showingRes, comingRes, actorsRes] = await Promise.all([
           getMoviesPublic({ status: 'SHOWING', pageNo: 1, pageSize: 12 }),
           getMoviesPublic({ status: 'COMING_SOON', pageNo: 1, pageSize: 12 }),
+          getActorsPublic({ pageNo: 1, pageSize: 12 }),
         ]);
         const showingRaw = showingRes?.data?.items || showingRes?.data || [];
         const comingRaw = comingRes?.data?.items || comingRes?.data || [];
+        const actorRaw = actorsRes?.data?.items || actorsRes?.items || actorsRes?.data || [];
         setNowShowing(withoutSoftDeleted(Array.isArray(showingRaw) ? showingRaw : []));
         setComingSoon(withoutSoftDeleted(Array.isArray(comingRaw) ? comingRaw : []));
+        setActors(Array.isArray(actorRaw) ? actorRaw : []);
       } catch {
         setNowShowing([]);
         setComingSoon([]);
+        setActors([]);
       } finally {
         setLoading(false);
       }
@@ -118,18 +124,6 @@ const UserHome = () => {
   const safeHeroIndex = heroMovies.length > 0 ? heroIndex % heroMovies.length : 0;
   const heroMovie = heroMovies[safeHeroIndex] || null;
   const latestTrailers = useMemo(() => [...nowShowing, ...comingSoon].filter((m) => m.trailer_url).slice(0, 5), [nowShowing, comingSoon]);
-  const actors = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          [...nowShowing, ...comingSoon]
-            .flatMap((m) => (typeof m.directors_name === 'string' ? m.directors_name.split(',') : []))
-            .map((x) => x.trim())
-            .filter(Boolean),
-        ),
-      ).slice(0, 8),
-    [nowShowing, comingSoon],
-  );
   const activeTrailerEmbedUrl = getYoutubeEmbedUrl(activeTrailerMovie?.trailer_url);
 
   useEffect(() => {
@@ -261,13 +255,23 @@ const UserHome = () => {
             {actors.length === 0 ? (
               <p className="text-sm text-zinc-500">Danh sách diễn viên sẽ được cập nhật.</p>
             ) : (
-              actors.map((name) => (
-                <div key={name} className="w-16 text-center sm:w-[78px]">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-sm font-bold text-zinc-300">
-                    {name.charAt(0)}
+              actors.slice(0, 8).map((actor) => (
+                <button
+                  key={actor.id || actor.name}
+                  type="button"
+                  onClick={() => actor.id && navigate(`/actors/${actor.id}`)}
+                  className="w-16 text-center sm:w-[78px]"
+                  aria-label={`Xem chi tiết diễn viên ${actor.name}`}
+                >
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-zinc-800 bg-zinc-900 text-sm font-bold text-zinc-300">
+                    {actor.image_url ? (
+                      <img src={actor.image_url} alt={actor.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span>{String(actor.name || '?').charAt(0)}</span>
+                    )}
                   </div>
-                  <p className="mt-2 line-clamp-2 text-[11px] text-zinc-400">{name}</p>
-                </div>
+                  <p className="mt-2 line-clamp-2 text-[11px] text-zinc-400">{actor.name}</p>
+                </button>
               ))
             )}
           </div>
