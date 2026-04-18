@@ -4,7 +4,7 @@ import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, Tabl
 import VoucherModals from '../components/features/voucher/VoucherModals';
 import { getVouchersAdmin, createVoucher, updateVoucher, deleteVoucher } from '../api/voucherApi';
 import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
-// import { toast } from 'react-hot-toast'; // Optional: Use for notifications if needed in the future
+import { toast } from '../lib/toast.jsx';
 
 const Vouchers = () => {
     const [vouchers, setVouchers] = useState([]);
@@ -50,7 +50,7 @@ const Vouchers = () => {
                     setModalState({ type: null, data: null });
                     fetchVouchers();
                 } else {
-                    alert(res?.message || 'Có lỗi xảy ra khi thêm voucher');
+                    toast.error(res?.message || 'Có lỗi xảy ra khi thêm voucher');
                 }
             } else if (type === 'edit') {
                 const res = await updateVoucher(id, payload);
@@ -58,7 +58,7 @@ const Vouchers = () => {
                     setModalState({ type: null, data: null });
                     fetchVouchers();
                 } else {
-                    alert(res?.message || 'Có lỗi xảy ra khi cập nhật voucher');
+                    toast.error(res?.message || 'Có lỗi xảy ra khi cập nhật voucher');
                 }
             } else if (type === 'delete') {
                 const res = await deleteVoucher(id);
@@ -66,12 +66,12 @@ const Vouchers = () => {
                     setModalState({ type: null, data: null });
                     fetchVouchers();
                 } else {
-                    alert(res?.message || 'Có lỗi xảy ra khi xóa voucher');
+                    toast.error(res?.message || 'Có lỗi xảy ra khi xóa voucher');
                 }
             }
         } catch (error) {
             console.error('Lỗi khi thao tác voucher:', error);
-            alert('Có lỗi hệ thống, vui lòng thử lại');
+            toast.error('Có lỗi hệ thống, vui lòng thử lại');
         }
     };
 

@@ -135,8 +135,8 @@ export const Sidebar = ({ isOpen = false, onClose }) => {
                       key={child.name}
                       to={child.href}
                       onClick={closeOnMobile}
-                      // Use end modifier so nested routes like /movies/new don't highlight the parent 'Danh sách Phim'
-                      end={child.href === '/movies' || child.href === '/cinemas'}
+                      // Chỉ highlight đúng một mục: path con dài hơn (/admin/cinemas/cities) không được coi là match /admin/cinemas
+                      end
                       className={({ isActive: isChildActive }) =>
                         cn(
                           'block px-3 py-2 rounded-lg text-sm transition-colors',

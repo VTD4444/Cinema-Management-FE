@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Armchair, Crown, Heart, Upload, AlertTriangle } from 'lucide-react';
 import { Modal, Input, Button, Select } from '../../ui';
 import {
@@ -7,8 +7,13 @@ import {
   deleteSeat,
   importSeatsFromExcel,
   normalizeSeatTypeForUi,
+  getSeats,
 } from '../../../api/seatApi';
+import { getRoomById } from '../../../api/roomApi';
 import { handleApiError } from '../../../utils/errorHandling';
+import { withoutSoftDeleted } from '../../../utils/withoutSoftDeleted';
+import { computePreviewSeatsFromGrids } from '../../../utils/roomSeatGrid';
+import AdminSeatMapPreview from '../rooms/AdminSeatMapPreview';
 
 const TYPE_OPTIONS = [
   { value: 'standard', label: 'Thường' },
@@ -203,12 +208,78 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
   const [manualCouple, setManualCouple] = useState(emptyManual);
 
   const [importFile, setImportFile] = useState(null);
+  const [roomLayoutSeats, setRoomLayoutSeats] = useState([]);
+  const [roomMapLoading, setRoomMapLoading] = useState(false);
+  const [roomNameHint, setRoomNameHint] = useState('');
 
   const isDelete = state.type === 'delete';
   const isAdd = state.type === 'add';
   const isEdit = state.type === 'edit';
   const isImport = state.type === 'import';
   const data = state.data;
+
+  const previewFromGrids = useMemo(
+    () => computePreviewSeatsFromGrids(sharedRowStart, gridStandard, gridVip, gridCouple),
+    [sharedRowStart, gridStandard, gridVip, gridCouple],
+  );
+
+  useEffect(() => {
+    if (!isAdd) return undefined;
+    if (!formData.room_id) {
+      setRoomLayoutSeats([]);
+      setRoomNameHint('');
+      return undefined;
+    }
+    const rid = parseInt(formData.room_id, 10);
+    if (!Number.isFinite(rid) || rid < 1) {
+      setRoomLayoutSeats([]);
+      return undefined;
+    }
+    let cancelled = false;
+    setRoomMapLoading(true);
+    Promise.all([getSeats({ room_id: rid }), getRoomById(rid).catch(() => null)])
+      .then(([seatRes, roomRes]) => {
+        if (cancelled) return;
+        const raw = seatRes?.data;
+        const list = Array.isArray(raw) ? raw : [];
+        setRoomLayoutSeats(withoutSoftDeleted(list));
+        const name = roomRes?.data?.name;
+        setRoomNameHint(name ? `Phòng: ${name}` : '');
+      })
+      .catch(() => {
+        if (!cancelled) setRoomLayoutSeats([]);
+      })
+      .finally(() => {
+        if (!cancelled) setRoomMapLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdd, formData.room_id]);
+
+  useEffect(() => {
+    if (!isEdit || !data?.room_id) return undefined;
+    let cancelled = false;
+    setRoomMapLoading(true);
+    Promise.all([getSeats({ room_id: data.room_id }), getRoomById(data.room_id).catch(() => null)])
+      .then(([seatRes, roomRes]) => {
+        if (cancelled) return;
+        const raw = seatRes?.data;
+        const list = Array.isArray(raw) ? raw : [];
+        setRoomLayoutSeats(withoutSoftDeleted(list));
+        const name = roomRes?.data?.name;
+        setRoomNameHint(name ? `Phòng: ${name}` : '');
+      })
+      .catch(() => {
+        if (!cancelled) setRoomLayoutSeats([]);
+      })
+      .finally(() => {
+        if (!cancelled) setRoomMapLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit, data?.room_id, data?.id]);
 
   useEffect(() => {
     if (isEdit && data) {
@@ -291,6 +362,13 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
     setRowBandOffset((o) => o + v.nr);
     clearGrid?.();
     onSuccess?.();
+    getSeats({ room_id: rid })
+      .then((seatRes) => {
+        const raw = seatRes?.data;
+        const list = Array.isArray(raw) ? raw : [];
+        setRoomLayoutSeats(withoutSoftDeleted(list));
+      })
+      .catch(() => {});
   };
 
   const handleSingleSeat = async (seatType, manual) => {
@@ -314,6 +392,13 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
           if (seatType === 'standard') setManualStandard(emptyManual());
           if (seatType === 'vip') setManualVip(emptyManual());
           if (seatType === 'couple') setManualCouple(emptyManual());
+          getSeats({ room_id: rid })
+            .then((seatRes) => {
+              const raw = seatRes?.data;
+              const list = Array.isArray(raw) ? raw : [];
+              setRoomLayoutSeats(withoutSoftDeleted(list));
+            })
+            .catch(() => {});
         } else {
           setError(res?.message || 'Không thể thêm ghế.');
         }
@@ -556,6 +641,29 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
               onClearError={() => setError('')}
             />
           </div>
+          <div className="relative space-y-4 border-t border-border/50 pt-4">
+            {roomNameHint ? <p className="text-xs text-zinc-500">{roomNameHint}</p> : null}
+            {roomMapLoading ? (
+              <div className="flex items-center justify-center rounded-xl border border-border/50 bg-zinc-950/40 py-12 text-sm text-zinc-500">
+                Đang tải sơ đồ phòng…
+              </div>
+            ) : (
+              <>
+                <AdminSeatMapPreview
+                  seats={roomLayoutSeats}
+                  title="Sơ đồ ghế hiện có trong phòng"
+                  emptyHint="Chưa có ghế hoặc chưa chọn phòng."
+                />
+                {previewFromGrids.length > 0 ? (
+                  <AdminSeatMapPreview
+                    seats={previewFromGrids}
+                    title="Xem trước lưới (chưa bấm Tạo lưới)"
+                    emptyHint="—"
+                  />
+                ) : null}
+              </>
+            )}
+          </div>
           <div className="flex justify-end pt-2 border-t border-border/50">
             <Button type="button" variant="ghost" onClick={onClose} className="rounded-full px-6 h-10">Đóng</Button>
           </div>
@@ -570,10 +678,11 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
         isOpen
         onClose={onClose}
         title="Chỉnh sửa ghế"
-        className="max-w-md bg-[#161616] border-border/50"
+        className="max-w-4xl bg-[#161616] border-border/50 max-h-[90vh] overflow-y-auto"
       >
         <form onSubmit={handleEditSubmit} className="space-y-6">
           {error && <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
+          {roomNameHint ? <p className="text-xs text-zinc-500">{roomNameHint}</p> : null}
           <Input
             label="Dãy (A-Z)"
             placeholder="VD: A"
@@ -603,6 +712,20 @@ const SeatModals = ({ state, onClose, onSuccess, roomId, rooms = [] }) => {
               <option key={t.value} value={t.value}>{t.label}</option>
             ))}
           </Select>
+          <div className="relative border-t border-border/50 pt-4">
+            {roomMapLoading ? (
+              <div className="flex items-center justify-center rounded-xl border border-border/50 bg-zinc-950/40 py-12 text-sm text-zinc-500">
+                Đang tải sơ đồ phòng…
+              </div>
+            ) : (
+              <AdminSeatMapPreview
+                seats={roomLayoutSeats}
+                highlightSeatId={data?.id}
+                title="Sơ đồ phòng (ghế đang sửa được viền sáng)"
+                emptyHint="Không tải được danh sách ghế của phòng."
+              />
+            )}
+          </div>
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="ghost" onClick={onClose} className="rounded-full px-6 h-10">Hủy</Button>
             <Button type="submit" className="rounded-full px-6 h-10" isLoading={loading}>Lưu</Button>

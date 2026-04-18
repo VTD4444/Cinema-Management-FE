@@ -9,6 +9,7 @@ import {
   Crown,
   Heart,
   Upload,
+  Grid3x3,
 } from 'lucide-react';
 import {
   Button,
@@ -134,8 +135,8 @@ const Seats = () => {
         <div className="rounded-xl border border-border bg-surface/50 p-6 flex items-center justify-between">
           <span className="text-sm font-medium text-zinc-400">Tổng số ghế</span>
           <span className="text-2xl font-bold text-white">{statsData.total}</span>
-          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-            <span className="text-lg font-bold text-primary">{statsData.total}</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
+            <Grid3x3 className="h-5 w-5 text-primary" aria-hidden />
           </div>
         </div>
         <div className="rounded-xl border border-border bg-surface/50 p-6 flex items-center justify-between">

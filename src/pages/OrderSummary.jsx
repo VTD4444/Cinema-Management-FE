@@ -3,18 +3,33 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import UserLayout from '../components/layout/UserLayout';
 import { getMyVouchers } from '../api/voucherApi';
 import { createOrder } from '../api/orderApi';
+import { getSeatMapByShowtime } from '../api/seatApi';
 import useAuthStore from '../store/useAuthStore';
+import { toast } from '../lib/toast.jsx';
+
+const toPositiveInt = (v) => {
+  if (v == null || v === '') return null;
+  const n = typeof v === 'number' && Number.isFinite(v) ? Math.trunc(v) : parseInt(String(v).trim(), 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+const resolveSeatId = (seat) => {
+  if (!seat || typeof seat !== 'object') return null;
+  return toPositiveInt(seat.id ?? seat.seat_id ?? seat.seatId);
+};
 
 const OrderSummary = () => {
   const { showtimeId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
 
   const {
     movie,
     cinema,
     time,
+    /** Khớp suất với ghế đã chọn (fallback URL params) */
+    showtimeId: stateShowtimeId,
     selectedSeats = [],
     selectedFoods = {},
     seatTotal = 0,
@@ -41,7 +56,7 @@ const OrderSummary = () => {
   
   useEffect(() => {
     if (timeLeft <= 0) {
-      alert("Hết thời gian giữ vé, vui lòng thực hiện lại.");
+      toast.error('Hết thời gian giữ vé, vui lòng thực hiện lại.');
       navigate(`/booking/${showtimeId}`);
       return;
     }
@@ -94,6 +109,17 @@ const OrderSummary = () => {
   const finalTotal = subTotal - discountAmount;
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const extractPaymentUrl = (response) => {
+    return (
+      response?.data?.payment_url ||
+      response?.payment_url ||
+      response?.data?.data?.payment_url ||
+      null
+    );
+  };
+
   if (errorState === 'AUTH_FAILED') {
     return <div className="text-white text-3xl p-10 bg-red-900 w-full h-screen">LỖI: Bạn chưa đăng nhập (isAuthenticated = false trong OrderSummary).</div>;
   }
@@ -109,11 +135,27 @@ const OrderSummary = () => {
         .map(fId => ({
           foodId: parseInt(fId, 10),
           quantity: selectedFoods[fId]
-        }));
+        }))
+        .filter(item => Number.isInteger(item.foodId) && item.quantity > 0);
+
+      const normalizedSeatIds = [
+        ...new Set(selectedSeats.map(resolveSeatId).filter(Boolean)),
+      ].sort((a, b) => a - b);
+
+      if (normalizedSeatIds.length === 0) {
+        throw new Error('Không có ghế hợp lệ để thanh toán');
+      }
+
+      const effectiveShowtimeId =
+        toPositiveInt(stateShowtimeId) ?? toPositiveInt(showtimeId);
+
+      if (!effectiveShowtimeId) {
+        throw new Error('Mã suất chiếu không hợp lệ. Quay lại và chọn ghế lần nữa.');
+      }
 
       const payload = {
-        showtimeId: parseInt(showtimeId, 10),
-        seatIds: selectedSeats.map(s => parseInt(s.id, 10)),
+        showtimeId: effectiveShowtimeId,
+        seatIds: normalizedSeatIds,
         foodItems,
       };
 
@@ -121,19 +163,51 @@ const OrderSummary = () => {
         payload.voucher_code = appliedVoucher.code;
       }
 
-      const res = await createOrder(payload);
-      
-      const resPayload = res?.data || res;
-      if (resPayload?.payment_url) {
-        window.location.href = resPayload.payment_url;
+      try {
+        const mapRes = await getSeatMapByShowtime(payload.showtimeId);
+        const map = mapRes?.data;
+        if (map && typeof map === 'object') {
+          const rows = Object.values(map).flat();
+          const booked = normalizedSeatIds.filter((sid) => {
+            const cell = rows.find((r) => toPositiveInt(r.id) === sid);
+            return cell?.status === 'BOOKED';
+          });
+          if (booked.length > 0) {
+            throw new Error('Một số ghế đã được đặt trước đó. Vui lòng quay lại chọn ghế khác.');
+          }
+        }
+      } catch (mapErr) {
+        if (mapErr?.message && mapErr.message.includes('đặt')) throw mapErr;
+      }
+
+      let res;
+      const maxAttempts = 2;
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        try {
+          res = await createOrder(payload);
+          break;
+        } catch (err) {
+          const msg = err?.response?.data?.message || '';
+          if (attempt < maxAttempts && /seat|ghế|exist|lock/i.test(msg)) {
+            await sleep(400);
+            continue;
+          }
+          throw err;
+        }
+      }
+
+      const paymentUrl = extractPaymentUrl(res);
+      if (paymentUrl) {
+        window.location.href = paymentUrl;
       } else {
-        alert('Chưa nhận được URL thanh toán từ máy chủ. ' + JSON.stringify(res));
+        console.error('Missing payment_url', res);
+        toast.error('Chưa nhận được URL thanh toán từ máy chủ.');
       }
 
     } catch (err) {
       console.error(err);
       const msg = err.response?.data?.message || err.message || 'Lỗi gọi API tạo đơn';
-      alert(`Đã xảy ra lỗi: ${msg}`);
+      toast.error(`Đã xảy ra lỗi: ${msg}`);
     } finally {
       setIsProcessing(false);
     }

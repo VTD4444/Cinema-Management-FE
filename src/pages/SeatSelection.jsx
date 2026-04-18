@@ -5,6 +5,8 @@ import { getSeatMapByShowtime } from '../api/seatApi';
 import { getFoods } from '../api/foodApi';
 import useAuthStore from '../store/useAuthStore';
 import UserLayout from '../components/layout/UserLayout';
+import { defaultSocketOptions, getSocketServerUrl } from '../utils/socketServerUrl';
+import { toast } from '../lib/toast.jsx';
 
 // Seat type price multipliers (relative to base_price from showtime)
 const SEAT_MULTIPLIER = {
@@ -110,10 +112,7 @@ const SeatSelection = () => {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-    const newSocket = io(backendUrl, {
-      transports: ['websocket', 'polling']
-    });
+    const newSocket = io(getSocketServerUrl(), defaultSocketOptions);
 
     if (newSocket.connected) {
       console.log('Socket already connected, joining showtime:', showtimeId);
@@ -177,7 +176,7 @@ const SeatSelection = () => {
 
     newSocket.on('error', (err) => {
       const msg = typeof err === 'string' ? err : err.message;
-      alert(msg);
+      toast.error(msg || 'Lỗi socket');
 
       // Rollback optimistic UI selection if the seat lock failed
       if (err && err.seatId) {
@@ -206,7 +205,7 @@ const SeatSelection = () => {
       if (socket) socket.emit('releaseSeat', { showtimeId, seatId: seat.id });
     } else {
       if (selectedSeats.length >= 8) {
-        alert('Bạn chỉ có thể chọn tối đa 8 ghế cho mỗi giao dịch.');
+        toast.error('Bạn chỉ có thể chọn tối đa 8 ghế cho mỗi giao dịch.');
         return;
       }
       setSelectedSeats(prev => [...prev, seat]);
@@ -478,15 +477,19 @@ const SeatSelection = () => {
                 </div>
                 <button
                   disabled={selectedSeats.length === 0}
-                  onClick={() => {
+                  onClick={async () => {
                     // Cố tình nhả khóa ghế (Release) ngay trước khi chuyển trang 
                     // để ép trạng thái ghế quay về "AVAILABLE", giúp Backend lọt qua validation.
                     selectedSeats.forEach(seat => {
                       if (socket) socket.emit('releaseSeat', { showtimeId, seatId: seat.id });
                     });
 
+                    // Chờ ngắn để server xử lý release trước khi sang trang thanh toán.
+                    await new Promise((resolve) => setTimeout(resolve, 250));
+
                     navigate(`/booking/${showtimeId}/summary`, {
                       state: {
+                        showtimeId: parseInt(String(showtimeId), 10),
                         movie, cinema, time,
                         selectedSeats, selectedFoods,
                         seatTotal, foodTotal, foods

@@ -1,68 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Armchair, Crown, Heart } from 'lucide-react';
 import { Modal, Input, Button, Select } from '../../ui';
-import { createRoom, updateRoom, deleteRoom } from '../../../api/roomApi';
-import { createSeat } from '../../../api/seatApi';
+import { createRoom, updateRoom, deleteRoom, getRoomById } from '../../../api/roomApi';
+import { createSeat, getSeats } from '../../../api/seatApi';
 import { handleApiError } from '../../../utils/errorHandling';
-
-const ROOM_TYPES = [
-  { value: 'standard', label: 'Standard' },
-  { value: 'gold_class', label: 'Gold Class' },
-  { value: 'couple', label: 'Couple' },
-];
-
-const FORMATS = [
-  { value: 'imax', label: 'IMAX' },
-  { value: '2d', label: '2D' },
-  { value: '3d', label: '3D' },
-];
-
-const STATUS_OPTIONS = [
-  { value: 'active', label: 'Đang hoạt động' },
-  { value: 'maintenance', label: 'Bảo trì' },
-  { value: 'pending', label: 'Chờ duyệt' },
-];
-
-const emptySeatGrid = () => ({
-  num_rows: '',
-  seats_per_row: '',
-});
-
-const rowLabelFromIndex = (startLetter, index) => {
-  const start = startLetter.toUpperCase().charCodeAt(0);
-  const code = start + index;
-  if (code < 65 || code > 90) return null;
-  return String.fromCharCode(code);
-};
-
-const validateSeatGrid = (g, label) => {
-  const nrRaw = String(g.num_rows ?? '').trim();
-  const spRaw = String(g.seats_per_row ?? '').trim();
-  if (!nrRaw && !spRaw) return { error: null, skip: true };
-  if (!nrRaw || !spRaw) return { error: `${label}: nhập đủ số hàng và ghế mỗi hàng, hoặc để trống cả hai.`, skip: false };
-  const nr = parseInt(nrRaw, 10);
-  const sp = parseInt(spRaw, 10);
-  if (Number.isNaN(nr) || nr < 1 || nr > 26) return { error: `${label}: số hàng 1–26.`, skip: false };
-  if (Number.isNaN(sp) || sp < 1 || sp > 99) return { error: `${label}: ghế mỗi hàng 1–99.`, skip: false };
-  return { error: null, skip: false, nr, sp };
-};
-
-const buildSeatPayloads = (roomId, seatType, nr, sp, rowStart) => {
-  const payloads = [];
-  for (let r = 0; r < nr; r += 1) {
-    const row = rowLabelFromIndex(rowStart, r);
-    if (!row) break;
-    for (let n = 1; n <= sp; n += 1) {
-      payloads.push({
-        room_id: Number(roomId),
-        row_label: row,
-        number: n,
-        type: seatType,
-      });
-    }
-  }
-  return payloads;
-};
+import { withoutSoftDeleted } from '../../../utils/withoutSoftDeleted';
+import {
+  emptySeatGrid,
+  validateSeatGrid,
+  buildSeatPayloads,
+  computePreviewSeatsFromGrids,
+} from '../../../utils/roomSeatGrid';
+import AdminSeatMapPreview from './AdminSeatMapPreview';
 
 const RoomAddSeatBlock = ({ title, icon, accentClass, borderClass, grid, setGrid, stackHint, onClearError }) => {
   const IconComponent = icon;
@@ -112,32 +61,91 @@ const RoomModals = ({ state, onClose, onSuccess, cinemaId }) => {
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
+    room_type: 'standard',
+    seat_count: '',
+    format: '2d',
+    status: 'active',
   });
   const [sharedSeatRowStart, setSharedSeatRowStart] = useState('A');
-  const [seatGridStandard, setSeatGridStandard] = useState(emptySeatGrid);
-  const [seatGridVip, setSeatGridVip] = useState(emptySeatGrid);
-  const [seatGridCouple, setSeatGridCouple] = useState(emptySeatGrid);
+  const [seatGridStandard, setSeatGridStandard] = useState(() => emptySeatGrid());
+  const [seatGridVip, setSeatGridVip] = useState(() => emptySeatGrid());
+  const [seatGridCouple, setSeatGridCouple] = useState(() => emptySeatGrid());
+  const [roomSeats, setRoomSeats] = useState([]);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const isDelete = state.type === 'delete';
   const isAddOrEdit = state.type === 'add' || state.type === 'edit';
   const data = state.data;
 
+  const previewSeats = useMemo(
+    () => computePreviewSeatsFromGrids(sharedSeatRowStart, seatGridStandard, seatGridVip, seatGridCouple),
+    [sharedSeatRowStart, seatGridStandard, seatGridVip, seatGridCouple],
+  );
+
   useEffect(() => {
     if (state.type === 'edit' && data) {
       setFormData({
         name: data.name ?? '',
+        room_type: data.room_type ?? 'standard',
+        seat_count: data.seat_count ?? '',
+        format: data.format ?? '2d',
+        status: data.status ?? 'active',
       });
+      setRoomSeats([]);
     } else if (state.type === 'add') {
       setFormData({
         name: '',
+        room_type: 'standard',
+        seat_count: '',
+        format: '2d',
+        status: 'active',
       });
       setSharedSeatRowStart('A');
       setSeatGridStandard(emptySeatGrid());
       setSeatGridVip(emptySeatGrid());
       setSeatGridCouple(emptySeatGrid());
+      setRoomSeats([]);
     }
     setError('');
   }, [state.type, data]);
+
+  useEffect(() => {
+    if (state.type !== 'edit' || !data?.id) {
+      setDetailLoading(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setDetailLoading(true);
+    (async () => {
+      try {
+        const [roomRes, seatRes] = await Promise.all([
+          getRoomById(data.id),
+          getSeats({ room_id: data.id }),
+        ]);
+        if (cancelled) return;
+        const r = roomRes?.data;
+        const raw = seatRes?.data;
+        const list = Array.isArray(raw) ? raw : [];
+        const cleaned = withoutSoftDeleted(list);
+        setFormData((prev) => ({
+          ...prev,
+          name: r?.name ?? prev.name ?? data.name ?? '',
+          room_type: r?.room_type ?? data.room_type ?? prev.room_type ?? 'standard',
+          seat_count: r?.seat_count ?? data.seat_count ?? (cleaned.length || prev.seat_count) ?? '',
+          format: r?.format ?? data.format ?? prev.format ?? '2d',
+          status: r?.status ?? data.status ?? prev.status ?? 'active',
+        }));
+        setRoomSeats(cleaned);
+      } catch {
+        if (!cancelled) setRoomSeats([]);
+      } finally {
+        if (!cancelled) setDetailLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [state.type, data?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -244,13 +252,7 @@ const RoomModals = ({ state, onClose, onSuccess, cinemaId }) => {
       return;
     }
 
-    const payload = {
-      name: formData.name.trim(),
-      room_type: formData.room_type,
-      seat_count: formData.seat_count ? parseInt(formData.seat_count, 10) : 0,
-      format: formData.format,
-      status: formData.status,
-    };
+    const payload = { name: formData.name.trim() };
     updateRoom(data.id, payload)
       .then((res) => {
         if (res?.success !== false) {
@@ -324,7 +326,7 @@ const RoomModals = ({ state, onClose, onSuccess, cinemaId }) => {
         isOpen
         onClose={onClose}
         title={isAdd ? 'Thêm phòng & ghế' : 'Chỉnh sửa phòng chiếu'}
-        className={isAdd ? 'max-w-4xl bg-[#161616] border-border/50 max-h-[92vh] overflow-y-auto' : 'max-w-md bg-[#161616] border-border/50'}
+        className="max-w-4xl bg-[#161616] border-border/50 max-h-[92vh] overflow-y-auto"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
@@ -387,51 +389,41 @@ const RoomModals = ({ state, onClose, onSuccess, cinemaId }) => {
                   onClearError={() => setError('')}
                 />
               </div>
+              <AdminSeatMapPreview
+                seats={previewSeats}
+                title="Xem trước sơ đồ ghế"
+                emptyHint="Nhập số hàng và ghế/hàng ở ít nhất một khối để xem trước sơ đồ."
+              />
             </div>
           )}
 
           {!isAdd && (
             <>
-              <Select
-                label="Loại phòng"
-                value={formData.room_type}
-                onChange={(e) => setFormData((p) => ({ ...p, room_type: e.target.value }))}
-                className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
-              >
-                {ROOM_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </Select>
-              <Input
-                label="Số ghế"
-                type="number"
-                min="1"
-                placeholder="VD: 80"
-                value={formData.seat_count}
-                onChange={(e) => { setFormData((p) => ({ ...p, seat_count: e.target.value })); setError(''); }}
-                className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
-                required
-              />
-              <Select
-                label="Định dạng"
-                value={formData.format}
-                onChange={(e) => setFormData((p) => ({ ...p, format: e.target.value }))}
-                className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
-              >
-                {FORMATS.map((f) => (
-                  <option key={f.value} value={f.value}>{f.label}</option>
-                ))}
-              </Select>
-              <Select
-                label="Trạng thái"
-                value={formData.status}
-                onChange={(e) => setFormData((p) => ({ ...p, status: e.target.value }))}
-                className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </Select>
+              <p className="text-xs text-zinc-500">
+                API phòng hiện chỉ lưu <strong className="text-zinc-400">tên phòng</strong>. Thông tin loại / định dạng (nếu có) chỉ để tham khảo từ danh sách.
+              </p>
+              {(formData.room_type || formData.format || formData.status || formData.seat_count !== '') && (
+                <div className="flex flex-wrap gap-2 rounded-lg border border-border/50 bg-zinc-900/40 px-3 py-2 text-xs text-zinc-400">
+                  {formData.room_type && <span>Loại: <span className="text-zinc-200">{formData.room_type}</span></span>}
+                  {formData.format && <span>· Định dạng: <span className="text-zinc-200">{formData.format}</span></span>}
+                  {formData.status && <span>· Trạng thái: <span className="text-zinc-200">{formData.status}</span></span>}
+                  {formData.seat_count !== '' && formData.seat_count != null && (
+                    <span>· Số ghế (ước tính): <span className="text-zinc-200">{formData.seat_count}</span></span>
+                  )}
+                </div>
+              )}
+              <div className="relative pt-2">
+                {detailLoading && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-zinc-950/70 text-sm text-zinc-400">
+                    Đang tải chi tiết phòng &amp; sơ đồ…
+                  </div>
+                )}
+                <AdminSeatMapPreview
+                  seats={roomSeats}
+                  title="Sơ đồ ghế hiện tại"
+                  emptyHint="Phòng chưa có ghế trong hệ thống. Thêm ghế tại mục Quản lý Ghế ngồi."
+                />
+              </div>
             </>
           )}
 
