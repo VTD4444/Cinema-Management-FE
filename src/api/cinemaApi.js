@@ -40,6 +40,14 @@ export const getCinemaById = (id) => {
 };
 
 /**
+ * Lấy danh sách phòng của một rạp
+ * @param {number|string} cinemaId
+ */
+export const getCinemaRooms = (cinemaId) => {
+  return axiosClient.get(`${CINEMAS_BASE}/${cinemaId}/rooms`);
+};
+
+/**
  * Tạo rạp mới (Admin only)
  * @param {{ name: string, address: string, province_id: number, image_urls?: string[] }} payload
  */

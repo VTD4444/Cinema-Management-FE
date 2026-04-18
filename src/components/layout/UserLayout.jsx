@@ -63,7 +63,7 @@ const UserHeader = () => {
         </Link>
         <nav className="flex items-center gap-6 text-zinc-300 transition-colors">
           <Link to="/movies" className={`font-medium transition-colors ${isActive('/movies') ? 'text-red-500 font-bold' : 'hover:text-white'}`}>Phim</Link>
-          <Link to="/search" className={`font-medium transition-colors ${isActive('/search') ? 'text-red-500 font-bold' : 'hover:text-white'}`}>Rạp</Link>
+          <Link to="/cinemas" className={`font-medium transition-colors ${isActive('/cinemas') || isActive('/search') ? 'text-red-500 font-bold' : 'hover:text-white'}`}>Rạp</Link>
           <Link to="/about" className={`font-medium transition-colors ${isActive('/about') ? 'text-red-500 font-bold' : 'hover:text-white'}`}>Về chúng tôi</Link>
           <Link to="/contact" className={`font-medium transition-colors ${isActive('/contact') ? 'text-red-500 font-bold' : 'hover:text-white'}`}>Trung tâm hỗ trợ</Link>
         </nav>

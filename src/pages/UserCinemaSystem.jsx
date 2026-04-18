@@ -13,7 +13,7 @@ import {
   Utensils,
 } from 'lucide-react';
 import UserLayout from '../components/layout/UserLayout';
-import { getCinemasPublic } from '../api/cinemaApi';
+import { getCinemasPublic, getCinemaRooms } from '../api/cinemaApi';
 import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 const imageFromCinema = (cinema) => {
@@ -37,6 +37,9 @@ const UserCinemaSystem = () => {
   const [provinceId, setProvinceId] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedCinemaId, setSelectedCinemaId] = useState(null);
+  const [rooms, setRooms] = useState([]);
+  const [roomLoading, setRoomLoading] = useState(false);
+  const [roomError, setRoomError] = useState('');
 
   useEffect(() => {
     const fetchCinemas = async () => {
@@ -93,6 +96,30 @@ const UserCinemaSystem = () => {
 
   const selectedCinema = filteredCinemas.find((c) => c.id === selectedCinemaId) || filteredCinemas[0] || null;
 
+  useEffect(() => {
+    const fetchRooms = async () => {
+      if (!selectedCinema?.id) {
+        setRooms([]);
+        setRoomError('');
+        return;
+      }
+      setRoomLoading(true);
+      setRoomError('');
+      try {
+        const res = await getCinemaRooms(selectedCinema.id);
+        const roomList = Array.isArray(res?.data?.data?.rooms) ? res.data.data.rooms : [];
+        setRooms(roomList.filter((room) => !room?.is_deleted));
+      } catch {
+        setRooms([]);
+        setRoomError('Không thể tải danh sách phòng chiếu.');
+      } finally {
+        setRoomLoading(false);
+      }
+    };
+
+    fetchRooms();
+  }, [selectedCinema?.id]);
+
   return (
     <UserLayout>
       <div className="min-h-screen bg-[#08090d] pb-14">
@@ -117,30 +144,32 @@ const UserCinemaSystem = () => {
                     className="h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 pl-9 pr-3 text-sm text-zinc-200 outline-none focus:border-primary"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setProvinceId('all')}
-                    className={`rounded-md border px-2 py-2 text-xs ${provinceId === 'all'
-                        ? 'border-primary bg-primary/20 text-primary'
-                        : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'
-                      }`}
-                  >
-                    Tất cả
-                  </button>
-                  {provinces.map((p) => (
+                <div className="max-h-100 overflow-y-auto pr-1">
+                  <div className="grid grid-cols-2 gap-2">
                     <button
-                      key={p.id}
                       type="button"
-                      onClick={() => setProvinceId(p.id)}
-                      className={`rounded-md border px-2 py-2 text-xs ${provinceId === p.id
+                      onClick={() => setProvinceId('all')}
+                      className={`rounded-md border px-2 py-2 text-xs ${provinceId === 'all'
                           ? 'border-primary bg-primary/20 text-primary'
                           : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'
                         }`}
                     >
-                      {p.name}
+                      Tất cả
                     </button>
-                  ))}
+                    {provinces.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setProvinceId(p.id)}
+                        className={`rounded-md border px-2 py-2 text-xs ${provinceId === p.id
+                            ? 'border-primary bg-primary/20 text-primary'
+                            : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200'
+                          }`}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -210,21 +239,6 @@ const UserCinemaSystem = () => {
                     </div>
                   </div>
 
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <button
-                      type="button"
-                      className="h-11 rounded-lg border border-zinc-800 bg-zinc-900 text-sm font-medium text-zinc-200"
-                    >
-                      Xem màn hình 2D
-                    </button>
-                    <button
-                      type="button"
-                      className="h-11 rounded-lg border border-zinc-800 bg-zinc-900 text-sm font-medium text-zinc-200"
-                    >
-                      Xem bản đồ
-                    </button>
-                  </div>
-
                   <div className="mt-4 grid gap-4 lg:grid-cols-[1.05fr_1fr]">
                     <div className="rounded-xl border border-zinc-900 bg-zinc-900/60 p-4">
                       <h4 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
@@ -253,6 +267,7 @@ const UserCinemaSystem = () => {
                     </div>
 
                     <div className="space-y-4">
+
                       <div className="rounded-xl border border-zinc-900 bg-zinc-900/60 p-4">
                         <h3 className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-zinc-100">
                           <span className="h-6 w-1 rounded-full bg-primary" />
