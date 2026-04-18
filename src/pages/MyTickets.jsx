@@ -178,7 +178,8 @@ const MyTickets = () => {
 
         // Transform backend data to match TicketCard props
         const formatted = dataItems.map(item => {
-          const dateObj = new Date(item.showtime);
+          const showtimeStr = item.showtime ? item.showtime.replace('Z', '') : '';
+          const dateObj = new Date(showtimeStr);
           const duration = item.duration || 120;
           const runtimeH = Math.floor(duration / 60);
           const runtimeM = duration % 60;
@@ -187,7 +188,7 @@ const MyTickets = () => {
             id: item.booking_code || `ORD-${item.order_id}`,
             orderId: item.order_id,
             status: item.payment_status === 'SUCCESS' ? 'success' : (item.payment_status === 'FAILED' ? 'failed' : 'processing'),
-            checkedIn: item.tickets[0].status === 'CHECKED_IN' || (new Date(item.showtime) < new Date()),
+            checkedIn: item.tickets?.[0]?.status === 'CHECKED_IN' || (dateObj < new Date()),
             movie: {
               title: item.movie_name || 'Phim rạp',
               poster: item.poster || 'https://via.placeholder.com/150',

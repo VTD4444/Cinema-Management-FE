@@ -81,7 +81,17 @@ const SeatSelection = () => {
           getSeatMapByShowtime(showtimeId),
           getFoods()
         ]);
-        setSeatMap(seatRes?.data || {});
+        const authoritativeMap = seatRes?.data || {};
+        setSeatMap(authoritativeMap);
+
+        // Lọc bỏ những ghế đã BOOKED khỏi selectedSeats (local storage)
+        setSelectedSeats(prev => {
+          const bookedIds = new Set();
+          Object.values(authoritativeMap).flat().forEach(seat => {
+            if (seat.status === 'BOOKED' || seat.status === 'SOLD') bookedIds.add(String(seat.id));
+          });
+          return prev.filter(s => !bookedIds.has(String(s.id)));
+        });
 
         let foodList = foodRes?.data?.items || foodRes?.data || [];
         if (!Array.isArray(foodList)) foodList = [];
@@ -146,7 +156,10 @@ const SeatSelection = () => {
           next[row] = next[row].map(s => {
             if (String(s.id) === String(seatId)) {
               found = true;
-              return { ...s, status: 'HOLDING' };
+              // Bỏ qua nếu ghế đã chính thức bị BOOKED
+              if (s.status !== 'BOOKED') {
+                return { ...s, status: 'HOLDING' };
+              }
             }
             return s;
           });
@@ -161,7 +174,9 @@ const SeatSelection = () => {
       setSeatMap(prev => {
         const next = { ...prev };
         Object.keys(next).forEach(row => {
-          next[row] = next[row].map(s => String(s.id) === String(seatId) ? { ...s, status: 'AVAILABLE' } : s);
+          next[row] = next[row].map(s => 
+            (String(s.id) === String(seatId) && s.status !== 'BOOKED') ? { ...s, status: 'AVAILABLE' } : s
+          );
         });
         return next;
       });

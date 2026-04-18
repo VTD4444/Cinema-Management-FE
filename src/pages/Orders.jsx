@@ -16,7 +16,8 @@ const formatCurrency = (amount) => {
 
 const formatDateTime = (raw) => {
   if (!raw) return '—';
-  return new Date(raw).toLocaleString('vi-VN', {
+  const dateStr = typeof raw === 'string' ? raw.replace('Z', '') : raw;
+  return new Date(dateStr).toLocaleString('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
@@ -340,88 +341,88 @@ const Orders = () => {
         </MobileTableCards>
 
         <div className="hidden md:block">
-        <Table className="border-0">
-          <TableHeader className="bg-zinc-800/50">
-            <TableRow className="hover:bg-transparent border-0">
-              <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider pl-6 h-12">Mã đơn</TableHead>
-              <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider h-12">Booking Code</TableHead>
-              <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider h-12">Chi tiết đặt vé</TableHead>
-              <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider h-12 text-right">Tổng tiền</TableHead>
-              <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider h-12 text-center">Trạng thái</TableHead>
-              <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider pr-6 text-right h-12">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-64 text-center">
-                  <div className="flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-red-500" />
-                    <p className="text-zinc-500 text-sm">Đang tải danh sách đơn hàng...</p>
-                  </div>
-                </TableCell>
+          <Table className="border-0">
+            <TableHeader className="bg-zinc-800/50">
+              <TableRow className="hover:bg-transparent border-0">
+                <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider pl-6 h-12">Mã đơn</TableHead>
+                <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider h-12">Booking Code</TableHead>
+                <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider h-12">Chi tiết đặt vé</TableHead>
+                <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider h-12 text-right">Tổng tiền</TableHead>
+                <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider h-12 text-center">Trạng thái</TableHead>
+                <TableHead className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider pr-6 text-right h-12">Thao tác</TableHead>
               </TableRow>
-            ) : filteredOrders.length > 0 ? (
-              filteredOrders.map((item, idx) => {
-                return (
-                  <TableRow key={item.order_id || item.booking_code || idx} className="border-b border-zinc-800/50 hover:bg-white/5 transition-colors">
-                    <TableCell className="pl-6 py-4">
-                      <p className="font-bold text-sm text-white tracking-tight">#{item.order_id}</p>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <span className="font-mono text-xs font-bold text-red-400">{item.booking_code || '—'}</span>
-                    </TableCell>
-                    <TableCell className="py-4 max-w-[300px]">
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-zinc-200 line-clamp-1">{item.movie_name || '—'}</p>
-                        <p className="text-xs text-zinc-400 line-clamp-1">
-                          {item.cinema} – {item.room}
-                        </p>
-                        <p className="text-xs text-zinc-500">
-                          Ghế: <span className="text-zinc-300 font-medium">{(item.seats || []).join(', ')}</span>
-                        </p>
-                        {item.foods && item.foods.length > 0 && (
-                          <p className="text-[10px] text-zinc-500 italic mt-1 bg-zinc-800/50 px-2 py-0.5 rounded w-fit">
-                            + {item.foods.map(f => `${f.quantity}x ${f.food_name || f.name}`).join(', ')}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4 text-right">
-                      <span className="text-sm font-bold text-white">{formatCurrency(item.total_amount)}</span>
-                    </TableCell>
-                    <TableCell className="py-4">
-                      <div className="flex items-center justify-center">
-                        <StatusBadge status={item.order_status || 'PENDING'} />
-                      </div>
-                    </TableCell>
-                    <TableCell className="pr-6 py-4 text-right">
-                      <button
-                        onClick={() => setSelectedOrderId(item.order_id || item.id)}
-                        className="h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all"
-                        title="Xem chi tiết"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="h-64 text-center">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <div className="h-12 w-12 rounded-full bg-zinc-800/50 flex items-center justify-center mb-2">
-                      <Search className="h-6 w-6 text-zinc-600" />
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-64 text-center">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+                      <p className="text-zinc-500 text-sm">Đang tải danh sách đơn hàng...</p>
                     </div>
-                    <p className="text-zinc-400 font-medium">Không tìm thấy đơn hàng nào</p>
-                    <p className="text-zinc-600 text-xs text-balance max-w-[200px]">Thử thay đổi điều kiện lọc hoặc từ khóa tìm kiếm</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                  </TableCell>
+                </TableRow>
+              ) : filteredOrders.length > 0 ? (
+                filteredOrders.map((item, idx) => {
+                  return (
+                    <TableRow key={item.order_id || item.booking_code || idx} className="border-b border-zinc-800/50 hover:bg-white/5 transition-colors">
+                      <TableCell className="pl-6 py-4">
+                        <p className="font-bold text-sm text-white tracking-tight">#{item.order_id}</p>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <span className="font-mono text-xs font-bold text-red-400">{item.booking_code || '—'}</span>
+                      </TableCell>
+                      <TableCell className="py-4 max-w-[300px]">
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-zinc-200 line-clamp-1">{item.movie_name || '—'}</p>
+                          <p className="text-xs text-zinc-400 line-clamp-1">
+                            {item.cinema} – {item.room}
+                          </p>
+                          <p className="text-xs text-zinc-500">
+                            Ghế: <span className="text-zinc-300 font-medium">{(item.seats || []).join(', ')}</span>
+                          </p>
+                          {item.foods && item.foods.length > 0 && (
+                            <p className="text-[10px] text-zinc-500 italic mt-1 bg-zinc-800/50 px-2 py-0.5 rounded w-fit">
+                              + {item.foods.map(f => `${f.quantity}x ${f.food_name || f.name}`).join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4 text-right">
+                        <span className="text-sm font-bold text-white">{formatCurrency(item.total_amount)}</span>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="flex items-center justify-center">
+                          <StatusBadge status={item.order_status || 'PENDING'} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="pr-6 py-4 text-right">
+                        <button
+                          onClick={() => setSelectedOrderId(item.order_id || item.id)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all"
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-64 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="h-12 w-12 rounded-full bg-zinc-800/50 flex items-center justify-center mb-2">
+                        <Search className="h-6 w-6 text-zinc-600" />
+                      </div>
+                      <p className="text-zinc-400 font-medium">Không tìm thấy đơn hàng nào</p>
+                      <p className="text-zinc-600 text-xs text-balance max-w-[200px]">Thử thay đổi điều kiện lọc hoặc từ khóa tìm kiếm</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
 
         {/* Pagination */}
