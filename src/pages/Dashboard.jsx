@@ -25,17 +25,85 @@ const parsePercent = (value) => {
 
 const formatPercent = (value) => `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
 
-const getApiData = (response) => response?.data || null;
+const getApiData = (response) => {
+  if (response == null) return null;
+  if (Array.isArray(response)) return response;
+  if (Object.prototype.hasOwnProperty.call(response, 'data')) return response.data;
+  if (Object.prototype.hasOwnProperty.call(response, 'results')) return response.results;
+  return response;
+};
+
+const normalizeSummary = (summary) => {
+  const source = summary || {};
+  return {
+    totalRevenue: Number(source.totalRevenue) || 0,
+    ticketRevenue: Number(source.ticketRevenue) || 0,
+    foodRevenue: Number(source.foodRevenue) || 0,
+    totalTicketsSold: Number(source.totalTicketsSold) || 0,
+    newUsers: Number(source.newUsers) || 0,
+    changes: source.changes || {},
+  };
+};
+
+const normalizeMonthly = (monthly) => {
+  const source = monthly || {};
+  const revenue = Array.isArray(source.revenue) ? source.revenue.map((item) => Number(item) || 0) : [];
+  const defaultMonths = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+  return {
+    months: Array.isArray(source.months) && source.months.length > 0 ? source.months : defaultMonths,
+    revenue,
+  };
+};
+
+const normalizeBookings = (bookings) =>
+  (Array.isArray(bookings) ? bookings : []).map((booking) => ({
+    ticketId: booking?.ticketId || booking?.id || '-',
+    bookingCode: booking?.bookingCode || '-',
+    customerName: booking?.customerName || booking?.customer || '-',
+    movieTitle: booking?.movieTitle || booking?.movie || '-',
+    time: booking?.time || booking?.date || '-',
+    status: booking?.status || 'Thành công',
+    statusType: booking?.statusType || 'success',
+  }));
+
+const normalizeTopMovies = (movies) =>
+  (Array.isArray(movies) ? movies : []).map((movie, index) => ({
+    rank: Number(movie?.rank) || index + 1,
+    id: movie?.id || `${movie?.title || 'movie'}-${index}`,
+    title: movie?.title || 'N/A',
+    poster: movie?.poster || null,
+    revenue: Number(movie?.revenue) || 0,
+    ticketsSold: Number(movie?.ticketsSold) || 0,
+  }));
+
+const normalizeTopCinemas = (cinemas) =>
+  (Array.isArray(cinemas) ? cinemas : []).map((cinema, index) => ({
+    rank: Number(cinema?.rank) || index + 1,
+    id: cinema?.id || `${cinema?.name || 'cinema'}-${index}`,
+    name: cinema?.name || 'N/A',
+    logo: cinema?.logo || null,
+    totalBookings: Number(cinema?.totalBookings ?? cinema?.bookings) || 0,
+    totalRevenue: Number(cinema?.totalRevenue) || 0,
+  }));
+
+const normalizeDashboardBundle = (bundle) => {
+  const source = bundle?.summary || bundle?.monthlyChart ? bundle : bundle?.data || bundle || {};
+  const summary = normalizeSummary(source.summary || source.summaryStats);
+  return {
+    summary,
+    monthlyChart: normalizeMonthly(source.monthlyChart || source.monthlyRevenue),
+    latestBookings: normalizeBookings(source.latestBookings),
+    topMovies: normalizeTopMovies(source.topMovies),
+    topCinemas: normalizeTopCinemas(source.topCinemas),
+  };
+};
 
 const buildDashboardFromParts = ({ summary, monthly, latestBookings, topMovies, topCinemas }) => ({
-  summary: summary || {},
-  monthlyChart: {
-    months: monthly?.months || [],
-    revenue: monthly?.revenue || [],
-  },
-  latestBookings: latestBookings || [],
-  topMovies: topMovies || [],
-  topCinemas: topCinemas || [],
+  summary: normalizeSummary(summary),
+  monthlyChart: normalizeMonthly(monthly),
+  latestBookings: normalizeBookings(latestBookings),
+  topMovies: normalizeTopMovies(topMovies),
+  topCinemas: normalizeTopCinemas(topCinemas),
 });
 
 const Dashboard = () => {
@@ -55,14 +123,14 @@ const Dashboard = () => {
         // Prefer the bundled endpoint first (/dashboard)
         const dashboardRes = await getDashboardData({ year });
         if (!active) return;
-        const dashboardBundle = getApiData(dashboardRes);
+        const dashboardBundle = normalizeDashboardBundle(getApiData(dashboardRes));
         setDashboardData(dashboardBundle || null);
 
         // Summary is optional; do not break whole page if this endpoint fails
         try {
           const summaryRes = await getDashboardSummary({ year });
           if (!active) return;
-          setSummaryData(getApiData(summaryRes) || null);
+          setSummaryData(normalizeSummary(getApiData(summaryRes)));
         } catch {
           if (!active) return;
           setSummaryData(null);
@@ -73,7 +141,7 @@ const Dashboard = () => {
           const [summaryResult, monthlyResult, latestResult, topMoviesResult, topCinemasResult] = await Promise.allSettled([
             getDashboardSummary({ year }),
             getDashboardMonthlyRevenue({ year }),
-            getDashboardLatestBookings({ limit: 10 }),
+            getDashboardLatestBookings({ year, limit: 10 }),
             getDashboardTopMovies({ year, limit: 5 }),
             getDashboardTopCinemas({ year, limit: 5 }),
           ]);
@@ -108,7 +176,7 @@ const Dashboard = () => {
           }
 
           setDashboardData(fallbackDashboard);
-          setSummaryData(summary || null);
+          setSummaryData(normalizeSummary(summary));
         } catch {
           if (!active) return;
           setError('Không thể tải dữ liệu dashboard.');
@@ -126,8 +194,8 @@ const Dashboard = () => {
   }, [year]);
 
   const kpis = useMemo(() => {
-    const summary = dashboardData?.summary || {};
-    const changes = summaryData?.changes || {};
+    const summary = normalizeSummary(dashboardData?.summary);
+    const changes = summaryData?.changes || summary?.changes || {};
     const ticketChange = parsePercent(changes.ticketRevenue);
     const foodChange = parsePercent(changes.foodRevenue);
     const totalRevenue = Number(summary.totalRevenue) || 0;
@@ -171,7 +239,10 @@ const Dashboard = () => {
   const bookings = dashboardData?.latestBookings || [];
   const topMovies = dashboardData?.topMovies || [];
   const topCinemas = dashboardData?.topCinemas || [];
-  const maxRevenue = Math.max(...(monthlyChart.revenue?.length ? monthlyChart.revenue : [0]));
+  const monthlyRevenue = (monthlyChart.revenue || []).map((value) => Number(value) || 0);
+  const maxRevenue = Math.max(...(monthlyRevenue.length ? monthlyRevenue : [0]));
+  const hasRevenue = maxRevenue > 0;
+  const topMonthIndex = monthlyRevenue.findIndex((value) => value === maxRevenue);
 
   return (
     <div className="space-y-5">
@@ -259,17 +330,41 @@ const Dashboard = () => {
                 </div>
                 <span className="rounded-full bg-zinc-800 px-2 py-1 text-[11px] text-zinc-300">Năm {year}</span>
               </div>
-              <div className="h-56 rounded-lg bg-[#0f0f0f] p-3">
-                <div className="flex h-full items-end gap-2">
+              <div className="relative h-100 overflow-hidden rounded-lg border border-zinc-800/70 bg-[#0f0f0f] p-3">
+                <div className="pointer-events-none absolute inset-x-3 top-3 bottom-9">
+                  {[0, 1, 2, 3].map((line) => (
+                    <div
+                      key={line}
+                      className="absolute inset-x-0 border-t border-zinc-800/60"
+                      style={{ top: `${line * 33.333}%` }}
+                    />
+                  ))}
+                </div>
+                {hasRevenue && (
+                  <div className="absolute left-3 top-2 rounded-md bg-zinc-900/80 px-2 py-1 text-[10px] text-zinc-300">
+                    Đỉnh: {(monthlyChart.months || [])[topMonthIndex] || '-'} - {formatCompactCurrency(maxRevenue)}
+                  </div>
+                )}
+                <div className="flex h-full items-end gap-2 pt-8">
                   {(monthlyChart.months || []).map((month, idx) => {
-                    const value = Number(monthlyChart.revenue?.[idx]) || 0;
-                    const ratio = maxRevenue > 0 ? Math.max(6, Math.round((value / maxRevenue) * 100)) : 6;
+                    const value = monthlyRevenue[idx] || 0;
+                    const ratio = hasRevenue ? Math.max(value > 0 ? 10 : 2, Math.round((value / maxRevenue) * 100)) : 2;
+                    const isActive = value > 0;
                     return (
-                      <div key={month} className="flex flex-1 flex-col items-center gap-2">
-                        <div className="flex h-full w-full items-end">
-                          <div className="w-full rounded-t bg-primary/90 transition-all" style={{ height: `${ratio}%` }} />
+                      <div key={month} className="group flex h-full flex-1 flex-col items-center justify-end gap-2">
+                        <div className="relative flex h-full w-full items-end">
+                          <div
+                            className={`w-full rounded-t-md transition-all duration-300 ${isActive
+                              ? 'bg-gradient-to-t from-red-600 to-red-400 shadow-[0_0_18px_rgba(220,38,38,0.35)]'
+                              : 'bg-zinc-700/60'
+                              }`}
+                            style={{ height: `${ratio}%` }}
+                          />
+                          <div className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] text-zinc-200 opacity-0 transition-opacity group-hover:opacity-100">
+                            {formatCompactCurrency(value)}
+                          </div>
                         </div>
-                        <span className="text-[10px] text-zinc-500">{month}</span>
+                        <span className={`text-[10px] ${isActive ? 'text-zinc-300' : 'text-zinc-500'}`}>{month}</span>
                       </div>
                     );
                   })}

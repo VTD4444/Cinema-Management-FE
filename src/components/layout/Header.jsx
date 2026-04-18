@@ -27,29 +27,32 @@ export const Header = ({ onMenuClick }) => {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background px-4 sm:px-6 lg:h-20 lg:px-8">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/95 px-3 backdrop-blur sm:h-16 sm:px-6 lg:h-20 lg:px-8">
+      <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
         <button
           type="button"
           onClick={onMenuClick}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-zinc-900/60 text-zinc-300 hover:text-white md:hidden"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-zinc-900/60 text-zinc-300 hover:text-white sm:h-9 sm:w-9 md:hidden"
           aria-label="Mở menu"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
         </button>
-        <h1 className="text-base font-bold text-white sm:text-lg lg:text-xl">{pageTitle}</h1>
+        <div className="min-w-0">
+          <h1 className="truncate text-sm font-bold text-white sm:text-lg lg:text-xl">{pageTitle}</h1>
+          <p className="hidden text-[11px] text-zinc-500 sm:block">Admin Dashboard</p>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4">
-        <button className="relative rounded-full p-2 text-gray-400 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
+      <div className="ml-3 flex shrink-0 items-center gap-1.5 sm:gap-3">
+        <button className="relative rounded-full p-1.5 text-gray-400 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background sm:p-2">
+          <Bell className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
           <span className="sr-only">Notifications</span>
         </button>
 
-        <button className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 border border-border overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-transform hover:scale-105">
+        <button className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-zinc-800 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background sm:h-9 sm:w-9">
           <div className="h-full w-full bg-gradient-to-br from-yellow-100 to-yellow-300 flex items-center justify-center">
-            <User className="h-5 w-5 text-yellow-800" />
+            <User className="h-4 w-4 text-yellow-800 sm:h-5 sm:w-5" />
           </div>
         </button>
       </div>

@@ -49,25 +49,25 @@ const UserHeader = () => {
 
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800/70 bg-[#0e0e0e]/90 text-sm text-zinc-100 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <Link to="/home" className="flex min-w-0 items-center gap-3">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6">
+        <Link to="/home" className="flex min-w-0 items-center gap-2 sm:gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <img src="/logo.png" alt="CineGo logo" className="h-7 w-7 object-contain" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-lg font-bold text-white tracking-tight leading-none">CineGo</h1>
+            <h1 className="text-base font-bold text-white tracking-tight leading-none sm:text-lg">CineGo</h1>
             <p className="mt-1 hidden text-[10px] font-medium uppercase text-gray-400 sm:block">
               Trải nghiệm điện ảnh
             </p>
           </div>
         </Link>
-        <nav className="flex items-center gap-6 text-zinc-300 transition-colors">
+        <nav className="hidden items-center gap-5 text-zinc-300 transition-colors md:flex lg:gap-6">
           <Link to="/movies" className={`font-medium transition-colors ${isActive('/movies') ? 'text-red-500 font-bold' : 'hover:text-white'}`}>Phim</Link>
           <Link to="/cinemas" className={`font-medium transition-colors ${isActive('/cinemas') ? 'text-red-500 font-bold' : 'hover:text-white'}`}>Rạp</Link>
           <Link to="/about" className={`font-medium transition-colors ${isActive('/about') ? 'text-red-500 font-bold' : 'hover:text-white'}`}>Về chúng tôi</Link>
           <Link to="/contact" className={`font-medium transition-colors ${isActive('/contact') ? 'text-red-500 font-bold' : 'hover:text-white'}`}>Trung tâm hỗ trợ</Link>
         </nav>
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <Link to="/search" className={`transition-colors ${isActive('/search') ? 'text-red-500' : 'text-zinc-300 hover:text-white'}`}>
             <Search className="h-5 w-5" />
           </Link>
@@ -84,12 +84,12 @@ const UserHeader = () => {
               <>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-800/50 px-3 py-1.5 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors"
+                  className="flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-800/50 px-2 py-1.5 text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white sm:px-3"
                 >
                   <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-700 text-white">
                     <User className="h-3.5 w-3.5" />
                   </div>
-                  <span className="max-w-[120px] truncate text-left text-sm font-medium">
+                  <span className="hidden max-w-[120px] truncate text-left text-sm font-medium lg:block">
                     {user?.full_name || 'Người dùng'}
                   </span>
                 </button>
@@ -140,10 +140,10 @@ const UserHeader = () => {
             ) : (
               <Link
                 to="/login"
-                className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full border border-zinc-700 bg-zinc-800/50 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors"
+                className="flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-800/50 px-2.5 py-2 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white sm:px-4"
               >
                 <User className="h-4 w-4" />
-                <span>Đăng nhập / Đăng ký</span>
+                <span className="hidden sm:inline">Đăng nhập / Đăng ký</span>
               </Link>
             )}
           </div>
