@@ -1,4 +1,8 @@
 import axios from 'axios';
+import { AUTH_REALM, getAccessToken, getAuthRealmFromPath } from '../store/authSession';
+import useUserAuthStore from '../store/useUserAuthStore';
+import useAdminAuthStore from '../store/useAdminAuthStore';
+import { isUserAuthRequiredRoute } from '../utils/authRoutes';
 
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
@@ -7,41 +11,39 @@ const axiosClient = axios.create({
   },
 });
 
-// Request Interceptor
 axiosClient.interceptors.request.use(
   (config) => {
-    // You can get token from store or localStorage here
-    const token = localStorage.getItem('accessToken');
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+    const realm = getAuthRealmFromPath(pathname);
+    const token = getAccessToken(realm);
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error),
 );
 
-// Response Interceptor
 axiosClient.interceptors.response.use(
   (response) => {
-    // any status code in the 2xx range
     if (response && response.data) {
       return response.data;
     }
     return response;
   },
   (error) => {
-    // any status code outside 2xx
     if (error.response && error.response.status === 401) {
-      // Handle unauthorized error and redirect based on current route context
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('userRole');
-
       const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
       const isAdminArea = currentPath.startsWith('/admin');
+      const realm = isAdminArea ? AUTH_REALM.ADMIN : AUTH_REALM.USER;
 
-      // Avoid redirect loops when already on login pages
+      if (realm === AUTH_REALM.ADMIN) {
+        useAdminAuthStore.getState().logout();
+      } else {
+        useUserAuthStore.getState().logout();
+      }
+
       const isAlreadyOnAdminLogin = currentPath === '/admin/login';
       const isAlreadyOnUserLogin = currentPath === '/login';
 
@@ -49,12 +51,13 @@ axiosClient.interceptors.response.use(
         if (!isAlreadyOnAdminLogin) {
           window.location.href = '/admin/login';
         }
-      } else if (!isAlreadyOnUserLogin) {
-        window.location.href = '/login';
+      } else if (isUserAuthRequiredRoute(currentPath) && !isAlreadyOnUserLogin) {
+        const returnUrl = encodeURIComponent(`${currentPath}${window.location.search || ''}`);
+        window.location.href = `/login?returnUrl=${returnUrl}`;
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosClient;

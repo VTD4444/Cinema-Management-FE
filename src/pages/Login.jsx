@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Input, Button } from '../components/ui';
 import { login } from '../api/authApi';
 import { Package } from 'lucide-react';
-import useAuthStore from '../store/useAuthStore';
+import useAdminAuthStore from '../store/useAdminAuthStore';
 
 const Login = () => {
   const navigate = useNavigate();
-  const authLogin = useAuthStore((state) => state.login);
+  const authLogin = useAdminAuthStore((state) => state.login);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -33,12 +33,11 @@ const Login = () => {
       const token = response?.data?.accessToken;
       const role = response?.data?.role;
 
-      if (token) {
-        // Lưu vào store (và localStorage thông qua store)
+      if (token && role === 'ADMIN') {
         authLogin({ role }, token);
-
-        // Điều hướng vào dashboard admin
-        navigate('/dashboard');
+        navigate('/admin/dashboard');
+      } else if (token) {
+        setError('Tài khoản này không có quyền truy cập khu vực quản trị.');
       } else {
         setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
       }

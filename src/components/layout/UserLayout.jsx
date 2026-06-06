@@ -2,20 +2,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, User, UserCircle, Ticket, CalendarDays, LogOut, Menu, X } from 'lucide-react';
 import UserFooter from './UserFooter';
-import useAuthStore from '../../store/useAuthStore';
+import useUserAuthStore from '../../store/useUserAuthStore';
+import { hasUserSession } from '../../store/authSession';
 import { getMyInfo } from '../../api/authApi';
 
 const UserHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated, logout, updateUser } = useAuthStore();
+  const { user, isAuthenticated, logout, updateUser } = useUserAuthStore();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Fetch updated user info to get the latest full_name, etc.
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = hasUserSession();
     if (token && isAuthenticated) {
       getMyInfo()
         .then(res => {

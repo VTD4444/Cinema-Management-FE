@@ -4,7 +4,7 @@ import UserLayout from '../components/layout/UserLayout';
 import { getMyVouchers } from '../api/voucherApi';
 import { createOrder } from '../api/orderApi';
 import { getSeatMapByShowtime } from '../api/seatApi';
-import useAuthStore from '../store/useAuthStore';
+import useUserAuthStore from '../store/useUserAuthStore';
 import { toast } from '../lib/toast.jsx';
 
 const toPositiveInt = (v) => {
@@ -22,7 +22,7 @@ const OrderSummary = () => {
   const { showtimeId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user } = useUserAuthStore();
 
   const {
     movie,
@@ -42,14 +42,16 @@ const OrderSummary = () => {
   // Validate state
   useEffect(() => {
     if (!isAuthenticated) {
-      setErrorState('AUTH_FAILED');
+      navigate('/login', {
+        replace: true,
+        state: { returnUrl: `${location.pathname}${location.search}` },
+      });
       return;
     }
     if (selectedSeats.length === 0) {
       setErrorState('NO_SEATS');
-      return;
     }
-  }, [isAuthenticated, selectedSeats]);
+  }, [isAuthenticated, selectedSeats, navigate, location.pathname, location.search]);
 
   // Countdown logic (10 minutes = 600 seconds)
   const [timeLeft, setTimeLeft] = useState(600);
@@ -120,9 +122,6 @@ const OrderSummary = () => {
     );
   };
 
-  if (errorState === 'AUTH_FAILED') {
-    return <div className="text-white text-3xl p-10 bg-red-900 w-full h-screen">LỖI: Bạn chưa đăng nhập (isAuthenticated = false trong OrderSummary).</div>;
-  }
   if (errorState === 'NO_SEATS') {
     return <div className="text-white text-3xl p-10 bg-yellow-900 w-full h-screen">LỖI: Không nhận được thông tin ghế. Do giỏ hàng tụt mất lúc chuyển trang.</div>;
   }

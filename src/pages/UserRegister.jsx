@@ -3,11 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Input, Button } from '../components/ui';
 import UserLayout from '../components/layout/UserLayout';
 import { register } from '../api/authApi';
-import useAuthStore from '../store/useAuthStore';
+import useUserAuthStore from '../store/useUserAuthStore';
 
 const UserRegister = () => {
   const navigate = useNavigate();
-  const authLogin = useAuthStore((state) => state.login);
+  const authLogin = useUserAuthStore((state) => state.login);
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -40,8 +40,7 @@ const UserRegister = () => {
       const user = res?.data?.user;
 
       if (token) {
-        localStorage.setItem('accessToken', token);
-        authLogin(user, token); // Update global state
+        authLogin(user, token);
         navigate('/home');
       } else {
         navigate('/login');

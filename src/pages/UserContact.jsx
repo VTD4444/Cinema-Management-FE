@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import UserLayout from '../components/layout/UserLayout';
 import { Search, Ticket, User, Tag, MoreHorizontal, Headset, MessageSquare, Send, Mail, MessageCircle } from 'lucide-react';
 import { createContact } from '../api/contactApi';
-import useAuthStore from '../store/useAuthStore';
+import useUserAuthStore from '../store/useUserAuthStore';
 
 const UserContact = () => {
-  const { user } = useAuthStore();
+  const { user } = useUserAuthStore();
 
   const [subject, setSubject] = useState('Vấn đề về đặt vé');
   const [message, setMessage] = useState('');

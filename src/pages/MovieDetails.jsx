@@ -6,6 +6,8 @@ import { getMovieById } from '../api/movieApi';
 import { getCitiesPublic } from '../api/cityApi';
 import { getCinemasPublic } from '../api/cinemaApi';
 import { getShowtimesByFilter } from '../api/showtimeApi';
+import useUserAuthStore from '../store/useUserAuthStore';
+import { hasUserSession } from '../store/authSession';
 
 const STATUS_MAP = {
   SHOWING: { text: 'NOW SHOWING', color: 'bg-red-600 text-white' },
@@ -16,6 +18,7 @@ const STATUS_MAP = {
 const MovieDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const isAuthenticated = useUserAuthStore((state) => state.isAuthenticated);
 
   const [movie, setMovie] = useState(null);
   const [isPlayingTrailer, setIsPlayingTrailer] = useState(false);
@@ -27,6 +30,20 @@ const MovieDetails = () => {
   const [groupedShowtimes, setGroupedShowtimes] = useState({});
   const [cachedShowtimes, setCachedShowtimes] = useState({});
   const [loadingShowtimes, setLoadingShowtimes] = useState(false);
+
+  const handleBookShowtime = (st, cinema, timeLabel) => {
+    const bookingPath = `/booking/${st.id}`;
+    const hasToken = hasUserSession();
+
+    if (!isAuthenticated && !hasToken) {
+      navigate('/login', { state: { returnUrl: bookingPath } });
+      return;
+    }
+
+    navigate(bookingPath, {
+      state: { movie, cinema, time: timeLabel, base_price: st.base_price },
+    });
+  };
 
   // Manage Dates
   const today = new Date();
@@ -363,7 +380,7 @@ const MovieDetails = () => {
                               return (
                                 <button
                                   key={st.id}
-                                  onClick={() => navigate(`/booking/${st.id}`, { state: { movie, cinema, time: timeLabel, base_price: st.base_price } })}
+                                  onClick={() => handleBookShowtime(st, cinema, timeLabel)}
                                   className="flex items-center justify-center w-20 py-2.5 bg-[#0e0e0e] hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-600 rounded-xl transition-colors group"
                                 >
                                   <span className="text-sm font-bold text-white group-hover:text-red-400">{timeLabel}</span>

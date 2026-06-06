@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { getSeatMapByShowtime } from '../api/seatApi';
 import { getFoods } from '../api/foodApi';
-import useAuthStore from '../store/useAuthStore';
+import useUserAuthStore from '../store/useUserAuthStore';
 import UserLayout from '../components/layout/UserLayout';
 import { defaultSocketOptions, getSocketServerUrl } from '../utils/socketServerUrl';
 import { toast } from '../lib/toast.jsx';
@@ -31,7 +31,7 @@ const SeatSelection = () => {
   const { showtimeId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useUserAuthStore();
 
   // Passed via location state from MovieDetails
   const { movie, cinema, time, base_price } = location.state || {};

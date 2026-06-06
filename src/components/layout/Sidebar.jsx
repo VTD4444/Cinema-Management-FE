@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut, ChevronDown } from 'lucide-react';
 import { NAVIGATION_ITEMS } from '../../config/navigation';
 import { cn } from '../../utils/mergeClass';
-import useAuthStore from '../../store/useAuthStore';
+import useAdminAuthStore from '../../store/useAdminAuthStore';
 
 export const Sidebar = ({ isOpen = false, onClose }) => {
   const location = useLocation();
-  const logout = useAuthStore((state) => state.logout);
+  const navigate = useNavigate();
+  const logout = useAdminAuthStore((state) => state.logout);
   const [expandedMenus, setExpandedMenus] = useState(['/movies', '/cinemas']);
 
   const toggleSubmenu = (path) => {
@@ -162,6 +163,7 @@ export const Sidebar = ({ isOpen = false, onClose }) => {
           onClick={() => {
             logout();
             closeOnMobile();
+            navigate('/admin/login');
           }}
           className="flex w-full box-border items-center px-4 py-2.5 text-sm font-medium text-gray-400 bg-zinc-900 rounded-lg transition-colors hover:text-white hover:bg-zinc-800"
         >

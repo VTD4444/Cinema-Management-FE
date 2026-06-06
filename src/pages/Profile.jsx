@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Ticket, User, UserCircle2 } from 'lucide-react';
 import UserLayout from '../components/layout/UserLayout';
-import useAuthStore from '../store/useAuthStore';
+import useUserAuthStore from '../store/useUserAuthStore';
 import { updateMyProfile } from '../api/userApi';
 import { changePassword, getMyProfile } from '../api/authApi';
 
 const Profile = () => {
-  const authUser = useAuthStore((state) => state.user);
-  const setAuthState = useAuthStore.setState;
+  const authUser = useUserAuthStore((state) => state.user);
+  const setAuthState = useUserAuthStore.setState;
   const [activeTab, setActiveTab] = useState('profile');
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);

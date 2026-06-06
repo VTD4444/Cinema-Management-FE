@@ -4,7 +4,7 @@ import { Calendar, MapPin, CheckCircle2, AlertCircle, Hourglass, X, ScanLine, Sh
 import { QRCodeSVG } from 'qrcode.react';
 
 import { getMyOrderHistory, getOrderDetail } from '../api/orderApi';
-import useAuthStore from '../store/useAuthStore';
+import useUserAuthStore from '../store/useUserAuthStore';
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -131,7 +131,7 @@ const TicketCard = ({ ticket, onShowQR, onShowDetails }) => {
   );
 };
 const MyTickets = () => {
-  const { user } = useAuthStore();
+  const { user } = useUserAuthStore();
   const [activeTab, setActiveTab] = useState('all');
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);

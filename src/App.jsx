@@ -1,7 +1,9 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppShell } from './components/layout';
-import useAuthStore from './store/useAuthStore';
+import useAdminAuthStore from './store/useAdminAuthStore';
+import useUserAuthStore from './store/useUserAuthStore';
+import { hasAdminSession, hasUserSession } from './store/authSession';
 import Dashboard from './pages/Dashboard';
 import Movies from './pages/Movies';
 import Genres from './pages/Genres';
@@ -38,18 +40,15 @@ import OrderSummary from './pages/OrderSummary';
 import PaymentResult from './pages/PaymentResult';
 
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
+  const adminUser = useAdminAuthStore((state) => state.user);
+  const hasAdminToken = hasAdminSession();
+  const role = adminUser?.role;
 
-  const hasToken = typeof window !== 'undefined' && localStorage.getItem('accessToken');
-  const role = user?.role || (typeof window !== 'undefined' && localStorage.getItem('userRole'));
-
-  // Chưa đăng nhập → về trang login admin
-  if (!isAuthenticated && !hasToken) {
+  if (!isAuthenticated && !hasAdminToken) {
     return <Navigate to="/admin/login" replace />;
   }
 
-  // Đã đăng nhập nhưng không phải ADMIN → về login admin
   if (role && role !== 'ADMIN') {
     return <Navigate to="/admin/login" replace />;
   }
@@ -58,10 +57,10 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const AdminRootRedirect = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const hasToken = typeof window !== 'undefined' && localStorage.getItem('accessToken');
+  const isAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
+  const hasAdminToken = hasAdminSession();
 
-  if (isAuthenticated || hasToken) {
+  if (isAuthenticated || hasAdminToken) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
@@ -69,9 +68,6 @@ const AdminRootRedirect = () => {
 };
 
 const UserRootRedirect = () => {
-  const hasToken = typeof window !== 'undefined' && localStorage.getItem('accessToken');
-
-  // Nếu VNPay redirect về "/" với params thanh toán → chuyển sang trang kết quả
   if (typeof window !== 'undefined') {
     const search = window.location.search;
     if (search.includes('vnp_ResponseCode')) {
@@ -79,11 +75,25 @@ const UserRootRedirect = () => {
     }
   }
 
-  if (hasToken) {
-    return <Navigate to="/home" replace />;
+  return <Navigate to="/home" replace />;
+};
+
+const UserProtectedRoute = ({ children }) => {
+  const location = useLocation();
+  const isAuthenticated = useUserAuthStore((state) => state.isAuthenticated);
+  const hasUserToken = hasUserSession();
+
+  if (!isAuthenticated && !hasUserToken) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ returnUrl: `${location.pathname}${location.search}` }}
+      />
+    );
   }
 
-  return <Navigate to="/login" replace />;
+  return children;
 };
 
 function App() {
@@ -93,8 +103,22 @@ function App() {
       <Route path="/" element={<UserRootRedirect />} />
       <Route path="/home" element={<UserHome />} />
       <Route path="/movie/:id" element={<MovieDetails />} />
-      <Route path="/booking/:showtimeId" element={<SeatSelection />} />
-      <Route path="/booking/:showtimeId/summary" element={<OrderSummary />} />
+      <Route
+        path="/booking/:showtimeId"
+        element={
+          <UserProtectedRoute>
+            <SeatSelection />
+          </UserProtectedRoute>
+        }
+      />
+      <Route
+        path="/booking/:showtimeId/summary"
+        element={
+          <UserProtectedRoute>
+            <OrderSummary />
+          </UserProtectedRoute>
+        }
+      />
       <Route path="/payment-result" element={<PaymentResult />} />
       <Route path="/movies" element={<UserMovies />} />
       <Route path="/movies/:id" element={<UserMovieDetail />} />
@@ -102,9 +126,30 @@ function App() {
       <Route path="/cinemas" element={<UserCinemaSystem />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/search" element={<UserSearch />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/my-vouchers" element={<MyVouchers />} />
-      <Route path="/my-tickets" element={<MyTickets />} />
+      <Route
+        path="/profile"
+        element={
+          <UserProtectedRoute>
+            <Profile />
+          </UserProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-vouchers"
+        element={
+          <UserProtectedRoute>
+            <MyVouchers />
+          </UserProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-tickets"
+        element={
+          <UserProtectedRoute>
+            <MyTickets />
+          </UserProtectedRoute>
+        }
+      />
       <Route path="/contact" element={<UserContact />} />
       <Route path="/login" element={<UserLogin />} />
       <Route path="/register" element={<UserRegister />} />
@@ -137,7 +182,6 @@ function App() {
         <Route path="/admin/feedbacks" element={<Feedbacks />} />
         <Route path="/admin/check-in" element={<Checkins />} />
 
-        {/* Fallback route trong khu vực admin */}
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
       </Route>
     </Routes>

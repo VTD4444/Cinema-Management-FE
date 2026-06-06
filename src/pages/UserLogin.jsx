@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Input, Button } from '../components/ui';
 import UserLayout from '../components/layout/UserLayout';
 import { login as loginApi } from '../api/authApi';
-import useAuthStore from '../store/useAuthStore';
+import useUserAuthStore from '../store/useUserAuthStore';
 
 const UserLogin = () => {
   const navigate = useNavigate();
-  const authLogin = useAuthStore((state) => state.login);
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const authLogin = useUserAuthStore((state) => state.login);
+
+  const returnUrl =
+    location.state?.returnUrl ||
+    searchParams.get('returnUrl') ||
+    '/home';
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,9 +35,8 @@ const UserLogin = () => {
       const user = res?.data?.user;
       
       if (token) {
-        localStorage.setItem('accessToken', token);
-        authLogin(user, token); // Update global state
-        navigate('/home');
+        authLogin(user || { role: res?.data?.role }, token);
+        navigate(returnUrl, { replace: true });
       } else {
         setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
       }
