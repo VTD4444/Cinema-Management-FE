@@ -177,7 +177,7 @@ const MyVouchers = () => {
           <h1 className="text-3xl font-bold mb-8">Voucher của tôi</h1>
           
           {/* Tabs */}
-          <div className="flex items-center gap-6 border-b border-zinc-800 mb-8 overflow-x-auto">
+          <div className="flex items-center gap-6 border-b border-zinc-800 mb-8">
             {tabs.map(tab => (
               <button
                 key={tab.id}
@@ -188,7 +188,7 @@ const MyVouchers = () => {
               >
                 {tab.label}
                 {activeTab === tab.id && (
-                  <div className="absolute bottom-[-1px] left-0 w-full h-0.5 bg-red-600 rounded-t" />
+                  <div className="absolute bottom-0 left-0 w-full h-0.5 bg-red-600 rounded-t" />
                 )}
               </button>
             ))}
