@@ -41,7 +41,7 @@ const ShowtimeModal = ({ state, onClose, onSuccess }) => {
   // Load cities, cinemas, movies when modal opens
   useEffect(() => {
     if (isAddOrEdit) {
-      getCities()
+      getCities({ pageNo: 1, pageSize: 500 })
         .then((res) => {
           const items = res?.data?.items || res?.data || [];
           setCities(Array.isArray(items) ? items : []);

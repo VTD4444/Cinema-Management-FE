@@ -9,6 +9,10 @@ import { getCinemasPublic } from '../api/cinemaApi';
 import { getShowtimesByFilter } from '../api/showtimeApi';
 import useUserAuthStore from '../store/useUserAuthStore';
 import { hasUserSession } from '../store/authSession';
+import {
+  filterGroupedShowtimesByCinema,
+  filterUpcomingShowtimes,
+} from '../utils/showtimeFilter';
 
 const posterFromMovie = (movie) => {
   if (Array.isArray(movie?.poster_urls) && movie.poster_urls.length > 0) return movie.poster_urls[0];
@@ -58,7 +62,6 @@ const UserMovieDetail = () => {
   const [cities, setCities] = useState([]);
   const [selectedCity, setSelectedCity] = useState('');
   const [cinemas, setCinemas] = useState([]);
-  const [groupedShowtimes, setGroupedShowtimes] = useState({});
   const [cachedShowtimes, setCachedShowtimes] = useState({});
   const [loadingShowtimes, setLoadingShowtimes] = useState(false);
 
@@ -99,7 +102,10 @@ const UserMovieDetail = () => {
       setLoading(true);
       setError('');
       try {
-        const [movieRes, cityRes] = await Promise.all([getMovieById(id), getCitiesPublic()]);
+        const [movieRes, cityRes] = await Promise.all([
+          getMovieById(id),
+          getCitiesPublic({ pageNo: 1, pageSize: 500 }),
+        ]);
         const data = movieRes?.data || movieRes;
         const cityRaw = cityRes?.data?.items || cityRes?.data || cityRes?.results || [];
         const cityList = Array.isArray(cityRaw) ? cityRaw : [];
@@ -129,7 +135,6 @@ const UserMovieDetail = () => {
         setCinemas(cinemaList);
         if (cinemaList.length === 0) {
           setCachedShowtimes({});
-          setGroupedShowtimes({});
           setAvailableDates([]);
           return;
         }
@@ -163,7 +168,7 @@ const UserMovieDetail = () => {
 
         results.forEach((res) => {
           const formatGroups = {};
-          res.showtimes.forEach((st) => {
+          filterUpcomingShowtimes(res.showtimes).forEach((st) => {
             const format = st.format || st.room_type || '2D';
             if (!formatGroups[format]) formatGroups[format] = [];
             formatGroups[format].push(st);
@@ -195,11 +200,11 @@ const UserMovieDetail = () => {
     };
   }, [selectedCity, id, allDates, selectedDate]);
 
-  useEffect(() => {
+  const groupedShowtimes = useMemo(() => {
     const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(
       selectedDate.getDate(),
     ).padStart(2, '0')}`;
-    setGroupedShowtimes(cachedShowtimes[dateStr] || {});
+    return filterGroupedShowtimesByCinema(cachedShowtimes[dateStr] || {});
   }, [selectedDate, cachedShowtimes]);
 
   const poster = posterFromMovie(movie);

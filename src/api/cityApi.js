@@ -17,7 +17,7 @@ const CITIES_BASE = '/provinces';
 
 /**
  * Lấy danh sách tỉnh/thành phố (phân trang, tìm kiếm)
- * @param {{ page?: number, limit?: number, search?: string }} params
+ * @param {{ pageNo?: number, pageSize?: number }} params
  */
 export const getCities = (params = {}) => {
   // Dùng endpoint admin để phù hợp luồng quản trị (GET /provinces/admin)

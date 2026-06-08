@@ -25,7 +25,7 @@ const Cities = () => {
 
   const fetchCities = useCallback(() => {
     setLoading(true);
-    getCities({ page, limit: PAGE_SIZE, search: search.trim() || undefined })
+    getCities({ pageNo: page, pageSize: PAGE_SIZE })
       .then((res) => {
         const raw = res?.data ?? res;
         if (Array.isArray(raw)) {

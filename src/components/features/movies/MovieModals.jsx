@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Input, Button, Select, Textarea } from '../../ui';
-import { ImagePlus, X, Film } from 'lucide-react';
+import { ChevronDown, ImagePlus, X, Film } from 'lucide-react';
 import { getGenres, createMovie, updateMovie, deleteMovie } from '../../../api/movieApi';
 import { withoutSoftDeleted } from '../../../utils/withoutSoftDeleted';
 import { handleApiError } from '../../../utils/errorHandling';
@@ -10,6 +10,98 @@ const STATUS_OPTIONS = [
   { value: 'COMING_SOON', label: 'Sắp chiếu' },
   { value: 'PASSED', label: 'Đã dừng' },
 ];
+
+const GenreMultiSelect = ({ genres, value = [], onChange, className = '' }) => {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleClickOutside = (e) => {
+      if (rootRef.current && !rootRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const selectedNames = genres
+    .filter((g) => value.includes(Number(g.id)))
+    .map((g) => g.name);
+
+  const toggleGenre = (id) => {
+    const numId = Number(id);
+    if (value.includes(numId)) {
+      onChange(value.filter((x) => x !== numId));
+    } else {
+      onChange([...value, numId]);
+    }
+  };
+
+  return (
+    <div ref={rootRef} className={`relative w-full flex flex-col gap-1.5 ${className}`}>
+      <label className="text-sm font-medium text-gray-300">Thể loại</label>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex h-11 w-full items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/50 px-3 text-left text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+        <span className={selectedNames.length ? 'text-white' : 'text-zinc-500'}>
+          {selectedNames.length ? selectedNames.join(', ') : 'Chọn thể loại'}
+        </span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-950 shadow-xl">
+          {genres.length === 0 ? (
+            <p className="px-3 py-2 text-sm text-zinc-500">Chưa có thể loại</p>
+          ) : (
+            genres.map((g) => {
+              const checked = value.includes(Number(g.id));
+              return (
+                <label
+                  key={g.id}
+                  className="flex cursor-pointer items-center gap-2 px-3 py-2.5 text-sm text-zinc-200 hover:bg-zinc-900"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleGenre(g.id)}
+                    className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-primary focus:ring-primary"
+                  />
+                  {g.name}
+                </label>
+              );
+            })
+          )}
+        </div>
+      )}
+      {selectedNames.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {genres
+            .filter((g) => value.includes(Number(g.id)))
+            .map((g) => (
+              <span
+                key={g.id}
+                className="inline-flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-0.5 text-xs text-zinc-300"
+              >
+                {g.name}
+                <button
+                  type="button"
+                  onClick={() => toggleGenre(g.id)}
+                  className="text-zinc-500 hover:text-white"
+                  aria-label={`Bỏ ${g.name}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const MovieModals = ({ state, onClose, onSuccess }) => {
   const [genres, setGenres] = useState([]);
@@ -83,15 +175,6 @@ const MovieModals = ({ state, onClose, onSuccess }) => {
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError('');
-  };
-
-  const handleGenreChange = (e) => {
-    const options = e.target.options;
-    const selected = [];
-    for (let i = 0; i < options.length; i++) {
-      if (options[i].selected) selected.push(Number(options[i].value));
-    }
-    handleChange('genre_ids', selected);
   };
 
   const handleSubmit = (e) => {
@@ -183,10 +266,24 @@ const MovieModals = ({ state, onClose, onSuccess }) => {
         onClose={onClose}
         title={state.type === 'add' ? 'Thêm phim mới' : 'Chỉnh sửa phim'}
         className="max-w-3xl bg-[#161616] border-border/50"
+        footerClassName="flex justify-end gap-3 bg-[#161616]"
+        footer={(
+          <>
+            <Button type="button" variant="ghost" onClick={onClose} className="rounded-full px-6 h-10" disabled={loading}>
+              Hủy
+            </Button>
+            <Button type="submit" form="movie-form" className="rounded-full px-6 h-10 gap-2" isLoading={loading} disabled={loading}>
+              {state.type === 'add' ? 'Thêm phim' : 'Lưu thay đổi'}
+            </Button>
+          </>
+        )}
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <p className="text-sm text-zinc-500 -mt-2 mb-6">Vui lòng điền thông tin phim theo thiết kế database</p>
-          {error && <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
+        <form id="movie-form" onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <p className="text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="col-span-1 space-y-3">
@@ -265,20 +362,11 @@ const MovieModals = ({ state, onClose, onSuccess }) => {
                 className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
               />
               {genres.length > 0 && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-gray-300">Thể loại</label>
-                  <select
-                    multiple
-                    value={formData.genre_ids.map(String)}
-                    onChange={handleGenreChange}
-                    className="flex min-h-[80px] w-full rounded-md border border-border bg-zinc-900/50 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-primary"
-                  >
-                    {genres.map((g) => (
-                      <option key={g.id} value={g.id}>{g.name}</option>
-                    ))}
-                  </select>
-                  <span className="text-xs text-gray-400">Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều</span>
-                </div>
+                <GenreMultiSelect
+                  genres={genres}
+                  value={formData.genre_ids}
+                  onChange={(ids) => handleChange('genre_ids', ids)}
+                />
               )}
               <Textarea
                 label="Mô tả"
@@ -288,15 +376,6 @@ const MovieModals = ({ state, onClose, onSuccess }) => {
                 className="bg-zinc-900/50 border-zinc-800 min-h-[80px] rounded-xl"
               />
             </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-border/50">
-            <Button type="button" variant="ghost" onClick={onClose} className="rounded-full px-6 h-10">
-              Hủy
-            </Button>
-            <Button type="submit" className="rounded-full px-6 h-10 gap-2" isLoading={loading}>
-              Lưu thay đổi
-            </Button>
           </div>
         </form>
       </Modal>

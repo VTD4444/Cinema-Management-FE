@@ -1,12 +1,16 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Plus, ChevronLeft, ChevronRight, Calendar, Search } from 'lucide-react';
 import { Button } from '../components/ui';
 import ShowtimeModal from '../components/features/showtime/ShowtimeModal';
-import { getShowtimesByFilter } from '../api/showtimeApi';
+import {
+  getShowtimesByCinemaDate,
+  getShowtimesByFilter,
+  getShowtimesFromResponse,
+} from '../api/showtimeApi';
 import { getMovies } from '../api/movieApi';
 import { getCinemas } from '../api/cinemaApi';
 import { getCities } from '../api/cityApi';
-import { getRooms } from '../api/roomApi';
+import { getRoomListFromResponse, getRooms } from '../api/roomApi';
 
 // Timeline constants
 const HOUR_START = 0;   // 0:00
@@ -93,34 +97,46 @@ const Showtimes = () => {
     return movieColorMap.current[movieId];
   };
 
-  // Fetch cities and cinemas on mount
+  // Fetch cities and movies on mount
   useEffect(() => {
-    getCities()
+    getCities({ pageNo: 1, pageSize: 500 })
       .then((res) => {
         const items = res?.data?.items || res?.data || [];
         setCities(Array.isArray(items) ? items : []);
       })
       .catch(() => setCities([]));
 
-    getCinemas()
+    getMovies({ pageNo: 1, pageSize: 100 })
+      .then((res) => {
+        const items = getMovieItemsFromResponse(res);
+        const list = Array.isArray(items)
+          ? items.filter((m) => ['SHOWING', 'COMING_SOON'].includes(String(m?.status || '').toUpperCase()))
+          : [];
+        setMovies(list);
+      })
+      .catch(() => setMovies([]));
+  }, []);
+
+  const scheduleMovieIds = useMemo(
+    () => movies.map((m) => m.id).filter((id) => id != null && id !== ''),
+    [movies],
+  );
+
+  // Fetch cinemas theo tỉnh/thành phố đã chọn
+  useEffect(() => {
+    if (!selectedCityId) {
+      setCinemas([]);
+      return;
+    }
+    getCinemas({ province_id: selectedCityId, pageNo: 1, pageSize: 500 })
       .then((res) => {
         const items = res?.data?.items || res?.data || [];
         setCinemas(Array.isArray(items) ? items : []);
       })
       .catch(() => setCinemas([]));
+  }, [selectedCityId]);
 
-    getMovies({ pageNo: 1, pageSize: 200 })
-      .then((res) => {
-        const items = getMovieItemsFromResponse(res);
-        setMovies(Array.isArray(items) ? items : []);
-      })
-      .catch(() => setMovies([]));
-  }, []);
-
-  // Filter cinemas by selected city
-  const cinemaOptions = selectedCityId
-    ? cinemas.filter((c) => String(c.province_id || c.city_id) === String(selectedCityId))
-    : cinemas;
+  const cinemaOptions = cinemas;
 
   // Auto select defaults so the page calls showtime API immediately
   useEffect(() => {
@@ -128,12 +144,6 @@ const Showtimes = () => {
       setSelectedCityId(String(cities[0].id));
     }
   }, [cities, selectedCityId]);
-
-  useEffect(() => {
-    if (!selectedMovieId && movies.length > 0) {
-      setSelectedMovieId(String(movies[0].id));
-    }
-  }, [movies, selectedMovieId]);
 
   useEffect(() => {
     if (!selectedCinemaId && cinemaOptions.length > 0) {
@@ -151,34 +161,54 @@ const Showtimes = () => {
   // Fetch rooms when cinema changes
   useEffect(() => {
     if (selectedCinemaId) {
-      getRooms({ cinema_id: selectedCinemaId })
-        .then((res) => {
-          const items = res?.data?.items || res?.data || [];
-          setRooms(Array.isArray(items) ? items : []);
-        })
+      getRooms({ cinema_id: selectedCinemaId, pageNo: 1, pageSize: 500 })
+        .then((res) => setRooms(getRoomListFromResponse(res)))
         .catch(() => setRooms([]));
     }
   }, [selectedCinemaId]);
 
-  // Fetch showtimes when filters change
-  const fetchShowtimes = useCallback(() => {
-    if (!selectedMovieId || !selectedCinemaId || !selectedDate) {
+  const fetchRequestRef = useRef(0);
+
+  const fetchShowtimes = useCallback(async () => {
+    if (!selectedCinemaId || !selectedDate) {
       setShowtimes([]);
       return;
     }
+    if (!selectedMovieId && scheduleMovieIds.length === 0) {
+      setShowtimes([]);
+      return;
+    }
+
+    const requestId = ++fetchRequestRef.current;
     setLoading(true);
-    getShowtimesByFilter({
-      movie_id: selectedMovieId,
-      cinema_id: selectedCinemaId,
-      date: selectedDate,
-    })
-      .then((res) => {
-        const items = res?.data?.showtimes || res?.data || [];
-        setShowtimes(Array.isArray(items) ? items : []);
-      })
-      .catch(() => setShowtimes([]))
-      .finally(() => setLoading(false));
-  }, [selectedMovieId, selectedCinemaId, selectedDate]);
+
+    try {
+      let items = [];
+      if (selectedMovieId) {
+        const res = await getShowtimesByFilter({
+          movie_id: selectedMovieId,
+          cinema_id: selectedCinemaId,
+          date: selectedDate,
+        });
+        if (requestId !== fetchRequestRef.current) return;
+        items = getShowtimesFromResponse(res);
+      } else {
+        items = await getShowtimesByCinemaDate({
+          cinema_id: selectedCinemaId,
+          date: selectedDate,
+          movieIds: scheduleMovieIds,
+        });
+        if (requestId !== fetchRequestRef.current) return;
+      }
+      setShowtimes(Array.isArray(items) ? items : []);
+    } catch {
+      if (requestId !== fetchRequestRef.current) return;
+      setShowtimes([]);
+    } finally {
+      if (requestId !== fetchRequestRef.current) return;
+      setLoading(false);
+    }
+  }, [selectedMovieId, selectedCinemaId, selectedDate, scheduleMovieIds]);
 
   useEffect(() => {
     fetchShowtimes();
@@ -271,7 +301,7 @@ const Showtimes = () => {
               onChange={(e) => setSelectedMovieId(e.target.value)}
               className="flex h-10 w-full rounded-full border border-border bg-zinc-900/80 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
             >
-              <option value="">-- Chọn phim --</option>
+              <option value="">Tất cả phim</option>
               {movies.map((m) => (
                 <option key={m.id} value={m.id}>{m.title}</option>
               ))}
@@ -313,22 +343,26 @@ const Showtimes = () => {
             {displayDate}
           </p>
           <p className="text-xs text-zinc-500">
-            Kéo ngang để xem toàn bộ khung giờ 00:00-24:00.
+            {selectedMovieId
+              ? 'Kéo ngang để xem toàn bộ khung giờ 00:00-24:00.'
+              : 'Chế độ tất cả phim: timeline hiển thị mọi suất chiếu trong ngày (mỗi phim một màu).'}
           </p>
         </div>
       </div>
 
       {/* Timeline view */}
       <div className="rounded-xl border border-border bg-surface/30 shadow-sm overflow-hidden">
-        {!selectedMovieId || !selectedCinemaId ? (
+        {!selectedCinemaId ? (
           <div className="p-12 text-center text-zinc-500">
             <Search className="h-8 w-8 mx-auto mb-3 text-zinc-600" />
-            <p className="text-sm">Vui lòng chọn <strong className="text-zinc-300">Rạp chiếu</strong> và <strong className="text-zinc-300">Phim</strong> để xem lịch chiếu.</p>
+            <p className="text-sm">Vui lòng chọn <strong className="text-zinc-300">Khu vực</strong> và <strong className="text-zinc-300">Rạp chiếu</strong> để xem lịch chiếu.</p>
           </div>
         ) : loading ? (
           <div className="p-12 text-center text-zinc-500">
             <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-sm">Đang tải lịch chiếu...</p>
+            <p className="text-sm">
+              {selectedMovieId ? 'Đang tải lịch chiếu...' : `Đang tải lịch tất cả phim (${scheduleMovieIds.length} phim)...`}
+            </p>
           </div>
         ) : (
           <>
@@ -450,7 +484,7 @@ const Showtimes = () => {
                         )}
 
                         {roomShowtimes.map((st) => {
-                          const movieId = st.movie.id || st.movie?.id;
+                          const movieId = st.movie?.id || st.movie_id;
                           const movieTitle = st.movie?.title || movies.find(m => m.id === movieId)?.title || `Phim #${movieId}`;
                           const duration = st.movie?.duration || movies.find(m => m.id === movieId)?.duration || 120;
                           const color = getMovieColor(movieId);
@@ -536,7 +570,7 @@ const Showtimes = () => {
         )}
 
         {/* Summary bar */}
-        {selectedMovieId && selectedCinemaId && !loading && (
+        {selectedCinemaId && !loading && (
           <div className="flex items-center justify-between px-6 py-3 border-t border-border/40 bg-surface/50">
             <span className="text-xs text-zinc-500">
               Tổng cộng <span className="font-semibold text-zinc-300">{showtimes.length}</span> suất chiếu

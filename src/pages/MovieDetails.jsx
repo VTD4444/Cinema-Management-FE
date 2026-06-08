@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, Star, MapPin } from 'lucide-react';
 import UserLayout from '../components/layout/UserLayout';
@@ -8,6 +8,10 @@ import { getCinemasPublic } from '../api/cinemaApi';
 import { getShowtimesByFilter } from '../api/showtimeApi';
 import useUserAuthStore from '../store/useUserAuthStore';
 import { hasUserSession } from '../store/authSession';
+import {
+  filterGroupedShowtimesByCinema,
+  filterUpcomingShowtimes,
+} from '../utils/showtimeFilter';
 
 const STATUS_MAP = {
   SHOWING: { text: 'NOW SHOWING', color: 'bg-red-600 text-white' },
@@ -27,7 +31,6 @@ const MovieDetails = () => {
   const [selectedCity, setSelectedCity] = useState('');
 
   const [cinemas, setCinemas] = useState([]);
-  const [groupedShowtimes, setGroupedShowtimes] = useState({});
   const [cachedShowtimes, setCachedShowtimes] = useState({});
   const [loadingShowtimes, setLoadingShowtimes] = useState(false);
 
@@ -62,7 +65,7 @@ const MovieDetails = () => {
   useEffect(() => {
     getMovieById(id).then(res => setMovie(res?.data)).catch(console.error);
 
-    getCitiesPublic().then(res => {
+    getCitiesPublic({ pageNo: 1, pageSize: 500 }).then(res => {
       const data = res?.data?.items || res?.data || res?.results || [];
       const list = Array.isArray(data) ? data : [];
       setCities(list);
@@ -86,7 +89,7 @@ const MovieDetails = () => {
         setCinemas(cinemaList);
 
         if (cinemaList.length === 0) {
-          setGroupedShowtimes({});
+          setCachedShowtimes({});
           return;
         }
 
@@ -129,7 +132,7 @@ const MovieDetails = () => {
 
         results.forEach(res => {
           const formatGroups = {};
-          res.showtimes.forEach(st => {
+          filterUpcomingShowtimes(res.showtimes).forEach(st => {
             const format = st.format || st.room_type || '2D Phụ đề'; // fallback to standard format
             if (!formatGroups[format]) formatGroups[format] = [];
             formatGroups[format].push(st);
@@ -172,14 +175,13 @@ const MovieDetails = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCity, id]);
 
-  // Update rendered showtimes when selectedDate changes
-  useEffect(() => {
+  const groupedShowtimes = useMemo(() => {
     const dateStr = [
       selectedDate.getFullYear(),
       String(selectedDate.getMonth() + 1).padStart(2, '0'),
-      String(selectedDate.getDate()).padStart(2, '0')
+      String(selectedDate.getDate()).padStart(2, '0'),
     ].join('-');
-    setGroupedShowtimes(cachedShowtimes[dateStr] || {});
+    return filterGroupedShowtimesByCinema(cachedShowtimes[dateStr] || {});
   }, [selectedDate, cachedShowtimes]);
 
   const daysOfWeek = ['CN', 'THỨ 2', 'THỨ 3', 'THỨ 4', 'THỨ 5', 'THỨ 6', 'THỨ 7'];
