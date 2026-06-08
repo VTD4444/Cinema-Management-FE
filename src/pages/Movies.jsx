@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Search,
   Plus,
@@ -65,8 +65,7 @@ const getPosterUrl = (movie) => {
 };
 
 const Movies = () => {
-  const [movies, setMovies] = useState([]);
-  const [total, setTotal] = useState(0);
+  const [allMovies, setAllMovies] = useState([]);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -75,43 +74,55 @@ const Movies = () => {
 
   const fetchMovies = useCallback(() => {
     setLoading(true);
-    getMovies({
-      page,
-      limit: PAGE_SIZE,
-      search: search.trim() || undefined,
-      status: statusFilter || undefined,
-    })
+    getMovies({ pageNo: 1, pageSize: 1000 })
       .then((res) => {
-        // Hỗ trợ cả format { data: { items, total } } và response mảng trực tiếp (JSON Server)
         const raw = res?.data ?? res;
         if (Array.isArray(raw)) {
-          const list = withoutSoftDeleted(raw);
-          setMovies(list);
-          setTotal(list.length);
-        } else if (raw && typeof raw === 'object') {
-          if (Array.isArray(raw.items)) {
-            const list = withoutSoftDeleted(raw.items);
-            setMovies(list);
-            setTotal(typeof raw.totalItems === 'number' ? raw.totalItems : typeof raw.total === 'number' ? raw.total : list.length);
-          } else {
-            setMovies([]);
-            setTotal(0);
-          }
+          setAllMovies(withoutSoftDeleted(raw));
+        } else if (raw && Array.isArray(raw.items)) {
+          setAllMovies(withoutSoftDeleted(raw.items));
         } else {
-          setMovies([]);
-          setTotal(0);
+          setAllMovies([]);
         }
       })
       .catch(() => {
-        setMovies([]);
-        setTotal(0);
+        setAllMovies([]);
       })
       .finally(() => setLoading(false));
-  }, [page, search, statusFilter]);
+  }, []);
 
   useEffect(() => {
     fetchMovies();
   }, [fetchMovies]);
+
+  const filteredMovies = useMemo(() => {
+    let list = allMovies;
+    if (statusFilter) {
+      list = list.filter((movie) => String(movie.status || '').toUpperCase() === statusFilter);
+    }
+    const query = search.trim().toLowerCase();
+    if (query) {
+      list = list.filter((movie) => String(movie.title || '').toLowerCase().includes(query));
+    }
+    return list;
+  }, [allMovies, statusFilter, search]);
+
+  const total = filteredMovies.length;
+  const movies = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredMovies.slice(start, start + PAGE_SIZE);
+  }, [filteredMovies, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, search]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, total]);
 
   const closeModal = () => setModalState({ type: null, data: null });
   const onModalSuccess = () => fetchMovies();
@@ -167,9 +178,9 @@ const Movies = () => {
           <MobileTableCards className="p-3">
             {loading ? (
               <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 text-center text-sm text-zinc-500">Đang tải...</div>
-            ) : movies.length === 0 ? (
+            ) : filteredMovies.length === 0 ? (
               <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 text-center text-sm text-zinc-500">
-                Chưa có phim nào. Nhấn "Thêm Phim Mới" để thêm.
+                {allMovies.length === 0 ? 'Chưa có phim nào. Nhấn "Thêm Phim Mới" để thêm.' : 'Không tìm thấy phim phù hợp.'}
               </div>
             ) : (
               movies.map((movie) => {
@@ -211,10 +222,10 @@ const Movies = () => {
                     Đang tải...
                   </TableCell>
                 </TableRow>
-              ) : movies.length === 0 ? (
+              ) : filteredMovies.length === 0 ? (
                 <TableRow className="border-b border-border/20">
                   <TableCell colSpan={6} className="py-12 text-center text-zinc-500">
-                    Chưa có phim nào. Nhấn &quot;Thêm Phim Mới&quot; để thêm.
+                    {allMovies.length === 0 ? 'Chưa có phim nào. Nhấn "Thêm Phim Mới" để thêm.' : 'Không tìm thấy phim phù hợp.'}
                   </TableCell>
                 </TableRow>
               ) : (

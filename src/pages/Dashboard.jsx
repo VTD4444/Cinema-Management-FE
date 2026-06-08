@@ -72,8 +72,8 @@ const normalizeTopMovies = (movies) =>
     id: movie?.id || `${movie?.title || 'movie'}-${index}`,
     title: movie?.title || 'N/A',
     poster: movie?.poster || null,
-    revenue: Number(movie?.revenue) || 0,
-    ticketsSold: Number(movie?.ticketsSold) || 0,
+    revenue: Number(movie?.revenue ?? movie?.total_revenue) || 0,
+    ticketsSold: Number(movie?.ticketsSold ?? movie?.tickets_sold) || 0,
   }));
 
 const normalizeTopCinemas = (cinemas) =>
@@ -82,8 +82,8 @@ const normalizeTopCinemas = (cinemas) =>
     id: cinema?.id || `${cinema?.name || 'cinema'}-${index}`,
     name: cinema?.name || 'N/A',
     logo: cinema?.logo || null,
-    totalBookings: Number(cinema?.totalBookings ?? cinema?.bookings) || 0,
-    totalRevenue: Number(cinema?.totalRevenue) || 0,
+    totalBookings: Number(cinema?.totalBookings ?? cinema?.bookings ?? cinema?.total_bookings) || 0,
+    totalRevenue: Number(cinema?.totalRevenue ?? cinema?.total_revenue) || 0,
   }));
 
 const normalizeDashboardBundle = (bundle) => {
@@ -120,11 +120,21 @@ const Dashboard = () => {
       setLoading(true);
       setError('');
       try {
-        // Prefer the bundled endpoint first (/dashboard)
-        const dashboardRes = await getDashboardData({ year });
+        // Bundled endpoint + dedicated top endpoints (bundle thiếu ticketsSold/totalRevenue)
+        const [dashboardRes, topMoviesRes, topCinemasRes] = await Promise.all([
+          getDashboardData({ year }),
+          getDashboardTopMovies({ year, limit: 5 }),
+          getDashboardTopCinemas({ year, limit: 5 }),
+        ]);
         if (!active) return;
         const dashboardBundle = normalizeDashboardBundle(getApiData(dashboardRes));
-        setDashboardData(dashboardBundle || null);
+        const topMovies = normalizeTopMovies(getApiData(topMoviesRes));
+        const topCinemas = normalizeTopCinemas(getApiData(topCinemasRes));
+        setDashboardData({
+          ...dashboardBundle,
+          topMovies: topMovies.length > 0 ? topMovies : dashboardBundle.topMovies,
+          topCinemas: topCinemas.length > 0 ? topCinemas : dashboardBundle.topCinemas,
+        });
 
         // Summary is optional; do not break whole page if this endpoint fails
         try {

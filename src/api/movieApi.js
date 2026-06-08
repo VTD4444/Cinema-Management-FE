@@ -14,9 +14,9 @@ const MOVIES_ADMIN_BASE = '/movies/admin';
 const GENRES_BASE = '/genres';
 
 /**
- * Lấy danh sách phim cho admin (có phân trang, tìm kiếm, lọc trạng thái)
- * @param {{ page?: number, limit?: number, search?: string, status?: 'showing'|'coming_soon'|'passed' }} params
- * @returns {Promise<{ success: boolean, message: string, data: { items: Array, total: number } }>}
+ * Lấy danh sách phim cho admin (GET /movies/admin — phân trang server-side)
+ * @param {{ pageNo?: number, pageSize?: number }} params
+ * @returns {Promise<{ success: boolean, message: string, data: { items: Array, totalItems: number } }>}
  */
 export const getMovies = (params = {}) => {
   // Dùng endpoint admin để phù hợp backend (GET /movies/admin)
