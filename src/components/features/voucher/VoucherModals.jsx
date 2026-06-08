@@ -27,7 +27,7 @@ const VoucherModals = ({ state, onClose, onSave }) => {
                     start_date: data.start_date ? data.start_date.split('T')[0] : '',
                     end_date: data.end_date ? data.end_date.split('T')[0] : '',
                     usage_limit: data.usage_limit ? data.usage_limit.toString() : '',
-                    is_active: data.is_active !== undefined ? data.is_active : true
+                    is_active: data.is_active !== false
                 });
             } else {
                 setFormData({
@@ -52,13 +52,13 @@ const VoucherModals = ({ state, onClose, onSave }) => {
         setLoading(true);
 
         const payload = {
-            code: formData.code,
+            code: formData.code.trim(),
             value: Number(formData.value),
             type: formData.type,
             start_date: formData.start_date,
             end_date: formData.end_date,
             usage_limit: Number(formData.usage_limit),
-            is_active: formData.is_active
+            is_active: Boolean(formData.is_active),
         };
 
         if (onSave) {
@@ -140,12 +140,12 @@ const VoucherModals = ({ state, onClose, onSave }) => {
 
                         <Select
                             label="Trạng thái"
-                            value={formData.is_deleted ? 'true' : 'false'}
-                            onChange={(e) => handleInputChange('is_deleted', e.target.value === 'true')}
+                            value={formData.is_active ? 'active' : 'inactive'}
+                            onChange={(e) => handleInputChange('is_active', e.target.value === 'active')}
                             className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
                         >
-                            <option value="true">Đang kích hoạt</option>
-                            <option value="false">Tạm dừng</option>
+                            <option value="active">Đang áp dụng</option>
+                            <option value="inactive">Tạm dừng</option>
                         </Select>
 
                         <Select

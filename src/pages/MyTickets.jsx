@@ -226,7 +226,7 @@ const MyTickets = () => {
           <h1 className="text-3xl font-bold mb-8">Vé của tôi</h1>
 
           {/* Tabs */}
-          <div className="flex items-center gap-6 border-b border-zinc-800 mb-8 overflow-x-auto">
+          <div className="flex items-center gap-6 border-b border-zinc-800 mb-8 overflow-x-auto overflow-y-hidden">
             {TABS.map(tab => (
               <button
                 key={tab.id}

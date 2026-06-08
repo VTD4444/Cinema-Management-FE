@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Search, Plus, Filter, Trash2, Pencil } from 'lucide-react';
 import { Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import VoucherModals from '../components/features/voucher/VoucherModals';
@@ -6,41 +6,59 @@ import { getVouchersAdmin, createVoucher, updateVoucher, deleteVoucher } from '.
 import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 import { toast } from '../lib/toast.jsx';
 
+const PAGE_SIZE = 10;
+
 const Vouchers = () => {
-    const [vouchers, setVouchers] = useState([]);
+    const [allVouchers, setAllVouchers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalState, setModalState] = useState({ type: null, data: null });
-
-    // Pagination state
     const [pageNo, setPageNo] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
+    const [statusFilter, setStatusFilter] = useState('');
 
     const fetchVouchers = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getVouchersAdmin({ pageNo, pageSize: 10 });
-
-            // Extract items correctly matching the backend response
+            const response = await getVouchersAdmin({ pageNo: 1, pageSize: 1000 });
             const items = withoutSoftDeleted(response?.data?.items || response?.items || []);
-            if (response?.data?.totalPages || response?.totalPages) {
-                setTotalPages(response?.data?.totalPages || response?.totalPages);
-            }
-            if (response?.data?.totalItems || response?.totalItems !== undefined) {
-                setTotalItems(response?.data?.totalItems || response?.totalItems);
-            }
-
-            setVouchers(items);
+            setAllVouchers(items);
         } catch (error) {
             console.error('Lỗi khi tải danh sách voucher:', error);
         } finally {
             setLoading(false);
         }
-    }, [pageNo]);
+    }, []);
 
     useEffect(() => {
         fetchVouchers();
     }, [fetchVouchers]);
+
+    const filteredVouchers = useMemo(() => {
+        if (statusFilter === 'active') {
+            return allVouchers.filter((item) => item.is_active !== false);
+        }
+        if (statusFilter === 'inactive') {
+            return allVouchers.filter((item) => item.is_active === false);
+        }
+        return allVouchers;
+    }, [allVouchers, statusFilter]);
+
+    const totalItems = filteredVouchers.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+
+    const vouchers = useMemo(() => {
+        const start = (pageNo - 1) * PAGE_SIZE;
+        return filteredVouchers.slice(start, start + PAGE_SIZE);
+    }, [filteredVouchers, pageNo]);
+
+    useEffect(() => {
+        setPageNo(1);
+    }, [statusFilter]);
+
+    useEffect(() => {
+        if (pageNo > totalPages) {
+            setPageNo(totalPages);
+        }
+    }, [pageNo, totalPages]);
 
     const handleSaveVoucher = async (payload, type, id) => {
         try {
@@ -110,10 +128,17 @@ const Vouchers = () => {
                     </div>
 
                     <div className="relative w-full md:w-48">
-                        <select className="flex h-11 w-full appearance-none rounded-full border border-zinc-800 bg-zinc-900/50 px-4 py-2 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors">
-                            <option>Tất cả trạng thái</option>
-                            <option>Đang kích hoạt</option>
-                            <option>Tạm dừng</option>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => {
+                                setStatusFilter(e.target.value);
+                                setPageNo(1);
+                            }}
+                            className="flex h-11 w-full appearance-none rounded-full border border-zinc-800 bg-zinc-900/50 px-4 py-2 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                        >
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="active">Đang áp dụng</option>
+                            <option value="inactive">Tạm dừng</option>
                         </select>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
                             <Filter className="h-4 w-4 text-gray-400" />
@@ -166,7 +191,7 @@ const Vouchers = () => {
                                         Đang tải dữ liệu...
                                     </TableCell>
                                 </TableRow>
-                            ) : vouchers.length === 0 ? (
+                            ) : filteredVouchers.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="h-32 text-center text-zinc-500">
                                         Không tìm thấy voucher nào.
@@ -200,15 +225,14 @@ const Vouchers = () => {
                                             <span className="text-[10px] text-zinc-500 block">lượt dùng</span>
                                         </TableCell>
                                         <TableCell className="py-4 text-center">
-                                            {item.is_deleted ? (
-                                                <span className="text-[11px] text-zinc-400 bg-zinc-800 px-2.5 py-1 rounded-full border border-zinc-700">
-                                                    Tạm dừng
-                                                </span>
-                                            ) : (
+                                            {item.is_active !== false ? (
                                                 <span className="text-[11px] text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
                                                     Đang áp dụng
                                                 </span>
-
+                                            ) : (
+                                                <span className="text-[11px] text-zinc-400 bg-zinc-800 px-2.5 py-1 rounded-full border border-zinc-700">
+                                                    Tạm dừng
+                                                </span>
                                             )}
                                         </TableCell>
                                         <TableCell className="pr-6 py-4 text-right">
@@ -231,10 +255,10 @@ const Vouchers = () => {
                 </div>
 
                 {/* Pagination */}
-                {!loading && vouchers.length > 0 && (
+                {!loading && filteredVouchers.length > 0 && (
                     <div className="flex items-center justify-between px-6 py-4 bg-surface/50 border-t border-border/40">
                         <span className="text-xs font-medium text-zinc-500">
-                            Hiển thị {(pageNo - 1) * 10 + 1}-{Math.min(pageNo * 10, totalItems)} trong {totalItems} voucher
+                            Hiển thị {(pageNo - 1) * PAGE_SIZE + 1}-{Math.min(pageNo * PAGE_SIZE, totalItems)} trong {totalItems} voucher
                         </span>
                         <div className="flex items-center gap-1">
                             <button

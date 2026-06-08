@@ -41,11 +41,10 @@ const Checkins = () => {
       const params = { pageNo: page, pageSize: PAGE_SIZE };
       if (statusFilter) params.ticket_status = statusFilter;
       const res = await getCheckinHistory(params);
-      const data = res?.data;
-      const items = data?.items || data?.data || data || [];
+      const items = res?.data?.items || res?.items || [];
       setHistory(Array.isArray(items) ? items : []);
-      setTotalPages(data?.totalPages || 1);
-      setTotalItems(data?.totalItems || items.length);
+      setTotalPages(res?.data?.totalPages || res?.totalPages || 1);
+      setTotalItems(res?.data?.totalItems ?? res?.totalItems ?? items.length);
     } catch {
       setHistory([]);
     } finally {
@@ -213,7 +212,7 @@ const Checkins = () => {
                       </div>
                     </TableCell>
                     <TableCell className="pr-6 py-3 text-right">
-                      <StatusBadge status={item.tickets[0].ticket_status || item.status || 'PENDING'} />
+                      <StatusBadge status={item.tickets?.[0]?.ticket_status || item.status || 'PENDING'} />
                     </TableCell>
                   </TableRow>
                 ))}

@@ -1,8 +1,8 @@
 import axiosClient from './axiosClient';
 
 /**
- * Lấy danh sách voucher (có phân trang)
- * @param {{ pageNo?: number, pageSize?: number }} params
+ * Lấy danh sách voucher (Admin)
+ * @param {{ pageNo?: number, pageSize?: number, is_active?: boolean }} params
  */
 export const getVouchersAdmin = (params = {}) => {
   return axiosClient.get('/vouchers', { params });

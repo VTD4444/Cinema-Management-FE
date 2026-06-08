@@ -12,7 +12,6 @@ const CinemaModals = ({ state, onClose, onSuccess }) => {
     name: '',
     address: '',
     province_id: '',
-    room_count: '',
   });
   const [provinces, setProvinces] = useState([]);
 
@@ -35,10 +34,9 @@ const CinemaModals = ({ state, onClose, onSuccess }) => {
         name: data.name ?? '',
         address: data.address ?? '',
         province_id: data.province_id != null ? String(data.province_id) : '',
-        room_count: data.room_count != null ? String(data.room_count) : '',
       });
     } else if (state.type === 'add') {
-      setFormData({ name: '', address: '', province_id: '', room_count: '' });
+      setFormData({ name: '', address: '', province_id: '' });
     }
     setError('');
   }, [state.type, data]);
@@ -51,7 +49,6 @@ const CinemaModals = ({ state, onClose, onSuccess }) => {
       name: formData.name.trim(),
       address: formData.address.trim(),
       province_id: formData.province_id ? Number(formData.province_id) : undefined,
-      room_count: formData.room_count ? parseInt(formData.room_count, 10) : undefined,
     };
     const request = state.type === 'add' ? createCinema(payload) : updateCinema(data.id, payload);
     request
@@ -140,15 +137,6 @@ const CinemaModals = ({ state, onClose, onSuccess }) => {
               </option>
             ))}
           </Select>
-          <Input
-            label="Số phòng chiếu"
-            type="number"
-            min="1"
-            placeholder="VD: 9"
-            value={formData.room_count}
-            onChange={(e) => { setFormData((p) => ({ ...p, room_count: e.target.value })); setError(''); }}
-            className="bg-zinc-900/50 border-zinc-800 rounded-xl h-11"
-          />
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="ghost" onClick={onClose} className="rounded-full px-6 h-10">Hủy</Button>
             <Button type="submit" className="rounded-full px-6 h-10" isLoading={loading}>Lưu</Button>

@@ -281,7 +281,7 @@ const SeatSelection = () => {
             <div className="rounded-2xl border border-zinc-800 bg-[#141414] p-4 sm:p-6 lg:p-8">
 
               {/* Legend */}
-              <div className="mb-8 flex flex-col items-center justify-center gap-6 rounded-2xl border border-zinc-800/50 bg-[#0e0e0e] px-4 py-4 text-sm font-medium sm:px-6 lg:mb-12 lg:gap-10 lg:gap-16">
+              <div className="mb-8 flex flex-col items-center justify-center gap-4 rounded-2xl border border-zinc-800/50 bg-[#0e0e0e] px-4 py-4 text-sm font-medium sm:px-6 md:flex-row md:gap-8 lg:mb-10">
 
                 {/* Status Group */}
                 <div className="flex flex-col items-center gap-3">
@@ -306,8 +306,9 @@ const SeatSelection = () => {
                   </div>
                 </div>
 
-                {/* Divider on desktop */}
-                <div className="hidden md:block w-px h-12 bg-zinc-800"></div>
+                {/* Divider */}
+                <div className="h-px w-full max-w-xs bg-zinc-800 md:hidden" />
+                <div className="hidden md:block w-px self-stretch shrink-0 bg-zinc-800" />
 
                 {/* Types Group */}
                 <div className="flex flex-col items-center gap-3">
