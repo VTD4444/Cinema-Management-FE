@@ -34,7 +34,7 @@ export const NAVIGATION_ITEMS = [
       { name: 'Tỉnh/Thành phố', href: '/admin/cinemas/cities' },
       { name: 'Danh sách Rạp', href: '/admin/cinemas' },
       { name: 'Phòng chiếu & Ghế', href: '/admin/cinemas/rooms' },
-      { name: 'Ghế', href: '/admin/cinemas/seats' },
+      // { name: 'Ghế', href: '/admin/cinemas/seats' },
     ],
   },
   {

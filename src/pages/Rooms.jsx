@@ -5,6 +5,8 @@ import RoomModals from '../components/features/rooms/RoomModals';
 import { getCities } from '../api/cityApi';
 import { getCinemas } from '../api/cinemaApi';
 import { getRooms } from '../api/roomApi';
+import { getSeats } from '../api/seatApi';
+import { withoutSoftDeleted } from '../utils/withoutSoftDeleted';
 
 const ROOM_TYPE_LABELS = { standard: 'Standard', gold_class: 'Gold Class', couple: 'Couple' };
 const FORMAT_LABELS = { imax: 'IMAX', '2d': '2D', '3d': '3D' };
@@ -81,14 +83,26 @@ const Rooms = () => {
     }
     setLoadingRooms(true);
     getRooms({ cinema_id: cinemaId, pageNo: 1, pageSize: 500 })
-      .then((res) => {
+      .then(async (res) => {
         const items = res?.data?.items || res?.data || [];
-        if (Array.isArray(items)) {
-          const byCinema = items.filter((r) => String(r.cinema_id) === String(cinemaId));
-          setRooms(byCinema);
-        } else {
+        if (!Array.isArray(items)) {
           setRooms([]);
+          return;
         }
+        const byCinema = items.filter((r) => String(r.cinema_id) === String(cinemaId));
+        const withSeatCounts = await Promise.all(
+          byCinema.map(async (room) => {
+            try {
+              const seatRes = await getSeats({ room_id: room.id });
+              const raw = seatRes?.data;
+              const seats = Array.isArray(raw) ? withoutSoftDeleted(raw) : [];
+              return { ...room, seat_count: seats.length };
+            } catch {
+              return { ...room, seat_count: room.seat_count ?? 0 };
+            }
+          }),
+        );
+        setRooms(withSeatCounts);
       })
       .catch(() => setRooms([]))
       .finally(() => setLoadingRooms(false));
